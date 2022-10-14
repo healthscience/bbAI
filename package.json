@@ -1,0 +1,19 @@
+{
+  "name": "BB-AI",
+  "version": "0.1.1",
+  "description": "BB toolkit helper AI",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "mocha test/*.*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://codeberg.org/cale/cale-holism.git"
+  },
+  "author": "aboynejames@gmail.com",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "mocha": "^10.0.0"
+  }
+}
