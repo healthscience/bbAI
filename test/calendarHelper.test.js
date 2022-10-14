@@ -9,6 +9,6 @@ describe('split input string into words', function () {
     assert.strictEqual(calHelper.timeDirection, -1)
     assert.strictEqual(calHelper.day[0], 'Thursday')
     assert.strictEqual(calHelper.month[0], '')
-    assert.strictEqual(calHelper.context.length, 0)
+    assert.strictEqual(calHelper.context[0], '')
   })
 })

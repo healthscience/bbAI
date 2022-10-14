@@ -49,8 +49,6 @@ class CalendarHelper extends EventEmitter {
     let replayOptions = ['hello', 'hopquery', 'sorry', 'prompt']
     // let responseType = replayOptions[0]
     this.extractContext()
-    console.log('context')
-    console.log(this.context)
     if (this.context[0] === 'hello') {
       let response = {}
       response.probability = 1

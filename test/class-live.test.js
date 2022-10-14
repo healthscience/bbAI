@@ -8,8 +8,8 @@ describe('bring bee-bee to be', function () {
   })
 })
 
-describe('check input question arriving', function () {
-  it('check for input language string & response route', function () {
+describe('check input question', function () {
+ it('check hello input language string & response route', function () {
     let bbAI = new bbLive()
     bbAI.nlpflow('hello')
     assert.equal(bbAI.peerQ, 'hello')
@@ -17,7 +17,7 @@ describe('check input question arriving', function () {
     assert.equal(response.data, 'hello how can BB-AI help?')
   })
 
-  it('check for input language string & response route', function () {
+  it('check normal input language string & response route', function () {
     let bbAI = new bbLive()
     bbAI.nlpflow('river flow tomorrow')
     assert.equal(bbAI.peerQ, 'river flow tomorrow')
