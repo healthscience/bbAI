@@ -1,5 +1,5 @@
 {
-  "name": "BB-AI",
+  "name": "bentobox-ai",
   "version": "0.1.1",
   "description": "BB toolkit helper AI",
   "main": "src/index.js",

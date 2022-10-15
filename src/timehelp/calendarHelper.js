@@ -44,6 +44,15 @@ class CalendarHelper extends EventEmitter {
   *
   */
   inputLanuage (inFLow) {
+    this.words = []
+    this.context = []
+    this.time = ''
+    this.day = []
+    this.month = []
+    this.year = []
+    this.timeDirection = 0
+    this.responseReply = {}
+
     this.words = inFLow.split(" ")
     // words suggest past future?
     let replayOptions = ['hello', 'hopquery', 'sorry', 'prompt']
@@ -178,7 +187,7 @@ class CalendarHelper extends EventEmitter {
     // build HOP query from logic and base time
     response.probability = 0.51
     response.type = 'hopquery'
-    response.text = 'Here is a query try'
+    response.text = 'Here is a query '
     response.data = newDate //  depending on confidnce in query, maybe send second bast interpretation???
     return response
   }
