@@ -41,18 +41,23 @@ class BbAI extends EventEmitter {
     if (bbResponseCategory.type === 'hello') {
       outFlow.type = 'hello'
       outFlow.text = 'hello how can BB-AI help?'
+      outFlow.query = false
       outFlow.data = 'hello how can BB-AI help?'
     } else if (bbResponseCategory.type === 'hopquery') {
       outFlow.type = 'hopquery'
       outFlow.text = bbResponseCategory.text
+      outFlow.query = true
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'sorry') {
       outFlow.text = 'Sorry BB is unable to help.'
+      outFlow.query = false
       outFlow.data = 'Sorry BB is unable to help.'
     } else if (bbResponseCategory.type === 'prompt') {
       outFlow.text = 'Could you state the day of the week/month, year etc?'
+      outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else {
+      outFlow.query = false
       outFlow.data = 'sorry BB cannot help.  BB is still learning.'
     }
     return outFlow
