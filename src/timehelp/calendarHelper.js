@@ -12,6 +12,7 @@
 import util, { callbackify } from 'util'
 import EventEmitter from 'events'
 import DateCalculator from './dateCalculator.js'
+import LibraryMatcher from './dateLanguage.js'
 
 class CalendarHelper extends EventEmitter {
 
@@ -19,6 +20,7 @@ class CalendarHelper extends EventEmitter {
     super()
     this.baseDate = ''
     this.dateCalc = new DateCalculator()
+    this.libraryMatch = new LibraryMatcher()
     this.words = []
     this.time = ''
     this.day = []
@@ -43,7 +45,9 @@ class CalendarHelper extends EventEmitter {
   * @method inputLanuage
   *
   */
-  inputLanuage (inFLow) {
+  inputLanuage = function (inFlow) {
+    console.log('input language query')
+    console.log(inFlow)
     this.words = []
     this.context = []
     this.time = ''
@@ -53,51 +57,60 @@ class CalendarHelper extends EventEmitter {
     this.timeDirection = 0
     this.responseReply = {}
 
-    this.words = inFLow.split(" ")
+    this.words = inFlow.split(" ")
+    console.log(this.words)
     // words suggest past future?
     let replayOptions = ['hello', 'hopquery', 'sorry', 'prompt']
     // let responseType = replayOptions[0]
     this.extractContext()
-    if (this.context[0] === 'hello') {
+    console.log('context')
+    console.log(this.context)
+    if (this.context === 'hello') {
       let response = {}
       response.probability = 1
       response.type = 'hello'
-      response.text = 'hello how can BB-AI help?'
-      response.data = 'hello how can BB-AI help?'
+      response.text = 'hello how can beebee help?'
+      response.data = 'hello how can beebee help?'
+      return response
+    } else if (this.context === 'query') {
+      console.log('query forming HOP query suggestion')
+      let queryData = this.queryManager()
+      let response = {}
+      response.probability = 1
+      response.type = 'query'
+      response.text = 'How does this query look?'
+      response.data = queryData
+      return response
+    } else if (this.context === 'upload') {
+      console.log('update data help file csvs Pandas AI agent help')
+      let response = {}
+      response.probability = 1
+      response.type = 'upload'
+      response.text = 'Please use the upload file button'
+      response.data = {}
+      return response
+    } else if (this.context === 'knowledge') {
+      console.log('question for knowledge science references etc.')
+      let response = {}
+      response.probability = 1
+      response.type = 'knowledge'
+      response.text = 'Heart rate is a measure of the blood flow and ...'
+      response.data = {}
+      return response
+    } else if (this.context === 'help') {
+      console.log('How to use bentobox-ds')
+      let response = {}
+      response.probability = 1
+      response.type = 'help'
+      response.text = 'The network library set governance over data standards of each bentoBoard.. .  . learn more'
+      response.data = {}
       return response
     } else {
-      this.extractTimeDirection()
-      this.extractDates()
+      this.libraryMatch.extractTimeDirection(this.words)
+      this.libraryMatch.extractDates(this.words)
       let response = this.interpretate()
       return response
     }
-  }
-
-  /**
-  * extract time day month year
-  * @method extractTimeDirection
-  *
-  */
-  extractTimeDirection = function () {
-    // parse natural language
-    let pastWords = ['last', 'past', 'yesterday', 'ago', 'remember', 'back']
-    let pastScore = 0
-    for (let pword of pastWords) {
-      let matchWord = this.words.includes(pword)
-      if(matchWord === true ) {
-        pastScore--
-      }
-    }
-
-     /* const manFilter = (e, words, rules) => {
-       let pastScore = 0
-       // if includes a false then needs removing
-       // let keepTidy = words.includes(false)
-       return pastScore
-     }
-    const newfullData = this.words.filter(n => manFilter(n, this.words, this.pastWords)) */
-
-    this.timeDirection = pastScore  // postive future  negative past zero unsure
   }
 
   /**
@@ -107,55 +120,40 @@ class CalendarHelper extends EventEmitter {
   */
   extractContext = function () {
     // parse natural language
-    let conversationWords = ['hello', 'How are you?']
+    // categorise general type of query
+    let queryCategory = ['hello', 'query', 'upload', 'knowledge', 'help'] 
+    let conversationWords = {}
+    conversationWords['hello'] =  ['hello', 'How are you?']
+    conversationWords['query'] =  ['query', 'chart', 'heart', 'rate', 'steps', 'bmi', 'compare']
+    conversationWords['upload'] =  ['upload', 'file', 'add', 'data']
+    conversationWords['knowledge'] =  ['why', 'can I', 'how', 'support', 'show me']
+    conversationWords['help'] =  ['help', 'bentobox', 'feature', 'tools', 'chart', 'bentospace', 'boards', 'network', 'library', 'invite', 'machine', 'beebee']
     let contextScore = ''
-    for (let vword of conversationWords) {
-      let matchWord = this.words.includes(vword)
-      if(matchWord === true ) {
-        contextScore = vword
+    for (let vword of queryCategory) {
+      for (let catW of conversationWords[vword]) {
+        let matchWord = this.words.includes(catW)
+        if(matchWord === true ) {
+          contextScore = vword
+        }
       }
     } 
-    if (contextScore === 'hello') {
-      this.context.push(contextScore)
-    } else {
-      let contextWords = ['week', 'every', 'mulltiple', 'list']
-      for (let cword of contextWords) {
-        let matchWord = this.words.includes(cword)
-        if(matchWord === true ) {
-          contextScore = cword
-        }
-      } 
-      this.context.push(contextScore)  // postive future  negative past zero unsure
-    }
+    this.context = contextScore
   }
+
   
   /**
-  * extract time day month year
-  * @method extractDates
+  * bring together all context building and suggested HOP query
+  * @method queryManager
   *
   */
-  extractDates = function () {
-    // parse natural language & return a utc date string(s)
-    this.baseDate = new Date()
-    // day language?
-    let dayWords = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    let dayScore = ''
-    for (let dword of dayWords) {
-      let matchWord = this.words.includes(dword)
-      if(matchWord === true ) {
-        dayScore = dword
-      }
-    }
-    this.day.push(dayScore)
-    let monthWords = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'November', 'December']
-    let monthScore = ''
-    for (let mword of monthWords) {
-      let matchWord = this.words.includes(mword)
-      if(matchWord === true ) {
-        monthScore = mword
-      }
-    }
-    this.month.push(monthScore)
+  queryManager = function () {
+    let dataQuery = {}
+    dataQuery.library = this.libraryMatch.probabiltyScoreMatch(this.words)
+    let timeContext = {}
+    timeContext.direction = this.libraryMatch.extractTimeDirection(this.words)
+    timeContext.words = this.libraryMatch.extractDates(this.words)
+    dataQuery.time = timeContext
+    return dataQuery
   }
 
   /**
@@ -183,7 +181,7 @@ class CalendarHelper extends EventEmitter {
     } else {
       dateRules.push(5)
     }
-    let newDate = this.dateCalc.backDays(this.baseDate, dateRules)
+    let newDate = 'nothing' // this.dateCalc.backDays(this.baseDate, dateRules)
     // build HOP query from logic and base time
     response.probability = 0.51
     response.type = 'hopquery'

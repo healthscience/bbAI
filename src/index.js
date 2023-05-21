@@ -35,30 +35,47 @@ class BbAI extends EventEmitter {
     this.peerQ = inFlow
     // pass to validtor FIRST TODO
     let bbResponseCategory = this.timeHelper.inputLanuage(this.peerQ)
+    console.log('response complete')
+    console.log(bbResponseCategory)
     let outFlow = {}
     outFlow.type = 'bbai'
     outFlow.action = 'npl-reply'
     if (bbResponseCategory.type === 'hello') {
       outFlow.type = 'hello'
-      outFlow.text = 'hello how can BB-AI help?'
+      outFlow.text = bbResponseCategory.text
       outFlow.query = false
-      outFlow.data = 'hello how can BB-AI help?'
-    } else if (bbResponseCategory.type === 'hopquery') {
+      outFlow.data = bbResponseCategory.data
+    } else if (bbResponseCategory.type === 'query') {
       outFlow.type = 'hopquery'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
       outFlow.data = bbResponseCategory.data
+    } else if (bbResponseCategory.type === 'upload') {
+      outFlow.type = 'upload'
+      outFlow.text = bbResponseCategory.text
+      outFlow.query = true
+      outFlow.data = bbResponseCategory.data
+    } else if (bbResponseCategory.type === 'knowledge') {
+      outFlow.type = 'knowledge'
+      outFlow.text = bbResponseCategory.text
+      outFlow.query = true
+      outFlow.data = bbResponseCategory.data
+    } else if (bbResponseCategory.type === 'help') {
+      outFlow.type = 'help'
+      outFlow.text = bbResponseCategory.text
+      outFlow.query = true
+      outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'sorry') {
-      outFlow.text = 'Sorry BB is unable to help.'
+      outFlow.text = 'Sorry beebee is unable to help.'
       outFlow.query = false
-      outFlow.data = 'Sorry BB is unable to help.'
+      outFlow.data = 'Sorry beebee is unable to help.'
     } else if (bbResponseCategory.type === 'prompt') {
       outFlow.text = 'Could you state the day of the week/month, year etc?'
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else {
       outFlow.query = false
-      outFlow.data = 'sorry BB cannot help.  BB is still learning.'
+      outFlow.data = 'sorry beebee cannot help.  beebee is still learning.'
     }
     return outFlow
   }
