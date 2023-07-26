@@ -32,6 +32,7 @@ class BbAI extends EventEmitter {
   *
   */
   nlpflow = function (inFlow) {
+    console.log(inFlow)
     this.peerQ = inFlow
     // pass to validtor FIRST TODO
     let bbResponseCategory = this.timeHelper.inputLanuage(this.peerQ)
@@ -41,39 +42,47 @@ class BbAI extends EventEmitter {
     outFlow.type = 'bbai'
     outFlow.action = 'npl-reply'
     if (bbResponseCategory.type === 'hello') {
+      outFlow.bbid = this.peerQ.bbid
       outFlow.type = 'hello'
       outFlow.text = bbResponseCategory.text
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'query') {
+      outFlow.bbid = this.peerQ.bbid
       outFlow.type = 'hopquery'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'upload') {
+      outFlow.bbid = this.peerQ.bbid
       outFlow.type = 'upload'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'knowledge') {
+      outFlow.bbid = this.peerQ.bbid
       outFlow.type = 'knowledge'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'help') {
+      outFlow.bbid = this.peerQ.bbid
       outFlow.type = 'help'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'sorry') {
+      outFlow.bbid = this.peerQ.bbid
       outFlow.text = 'Sorry beebee is unable to help.'
       outFlow.query = false
       outFlow.data = 'Sorry beebee is unable to help.'
     } else if (bbResponseCategory.type === 'prompt') {
+      outFlow.bbid = this.peerQ.bbid
       outFlow.text = 'Could you state the day of the week/month, year etc?'
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else {
+      outFlow.bbid = this.peerQ.bbid
       outFlow.query = false
       outFlow.data = 'sorry beebee cannot help.  beebee is still learning.'
     }
