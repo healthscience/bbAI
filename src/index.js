@@ -11,19 +11,23 @@
 */
 import util from 'util'
 import EventEmitter from 'events'
-import TimeHelp from './timehelp/calendarHelper.js'
+import HopQuerybuider from 'hop-query-builder'
+import DataParse from './dataExtract/dataParse.js'
+import ContextHelp from './timehelp/contextHelper.js'
 
 class BbAI extends EventEmitter {
 
   constructor() {
     super()
     this.hello = 'bb-AI--{{hello}}'
+    this.queryBuilder = new HopQuerybuider()
     this.peerQ = ''
-    this.timeHelper = new TimeHelp()
+    this.contextHelper = new ContextHelp()
     /* this.timeHelper.on('data', (data) => {
       console.log(`Received data: "${data}"`)
     })
     this.timeHelper.write('bb hello') */
+    this.dataParser = new DataParse()
   }
 
   /**
@@ -34,55 +38,61 @@ class BbAI extends EventEmitter {
   nlpflow = function (inFlow) {
     console.log(inFlow)
     this.peerQ = inFlow
+    // can beebee extract any data?  string input numbers array  file upload csv excel api etc.
+    let initialDataExtract = this.dataParser.numberParse(inFlow)
+    console.log('data extract')
+    console.log(initialDataExtract)
     // pass to validtor FIRST TODO
-    let bbResponseCategory = this.timeHelper.inputLanuage(this.peerQ)
-    console.log('response complete')
+    let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
+    console.log('bb-response complete')
     console.log(bbResponseCategory)
+    // need rules outFlow logic to order reponse and append data where relevant.
     let outFlow = {}
     outFlow.type = 'bbai'
     outFlow.action = 'npl-reply'
     if (bbResponseCategory.type === 'hello') {
-      outFlow.bbid = this.peerQ.bbid
       outFlow.type = 'hello'
       outFlow.text = bbResponseCategory.text
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
-    } else if (bbResponseCategory.type === 'query') {
-      outFlow.bbid = this.peerQ.bbid
+    } else if (bbResponseCategory.type === 'hopquery') {
+      console.log('bb--hopquery')
       outFlow.type = 'hopquery'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
-      outFlow.data = bbResponseCategory.data
+      if (initialDataExtract.status !== true) {
+        console.log('bb--no number')
+        outFlow.data = bbResponseCategory.data
+      } else {
+        console.log('bb-numbers')
+        let safeFlowQuery = this.queryBuilder.queryInputs(initialDataExtract)
+        console.log('bb-safe query build back-------')
+        outFlow.data = safeFlowQuery
+      }
     } else if (bbResponseCategory.type === 'upload') {
-      outFlow.bbid = this.peerQ.bbid
       outFlow.type = 'upload'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'knowledge') {
-      outFlow.bbid = this.peerQ.bbid
       outFlow.type = 'knowledge'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'help') {
-      outFlow.bbid = this.peerQ.bbid
       outFlow.type = 'help'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'sorry') {
-      outFlow.bbid = this.peerQ.bbid
       outFlow.text = 'Sorry beebee is unable to help.'
       outFlow.query = false
       outFlow.data = 'Sorry beebee is unable to help.'
     } else if (bbResponseCategory.type === 'prompt') {
-      outFlow.bbid = this.peerQ.bbid
       outFlow.text = 'Could you state the day of the week/month, year etc?'
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else {
-      outFlow.bbid = this.peerQ.bbid
       outFlow.query = false
       outFlow.data = 'sorry beebee cannot help.  beebee is still learning.'
     }
@@ -96,7 +106,7 @@ class BbAI extends EventEmitter {
   */
   aiAsk = function () {
     let outFlow = {}
-    outFlow.type = 'CALEAI'
+    outFlow.type = 'beebee-predict'
     outFlow.action = 'prediction'
     let caleReply = '' // need to call AI
     if (caleReply === 'no-prediction') {
