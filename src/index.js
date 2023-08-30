@@ -17,9 +17,11 @@ import ContextHelp from './timehelp/contextHelper.js'
 
 class BbAI extends EventEmitter {
 
-  constructor() {
+  constructor(holepunch) {
     super()
     this.hello = 'bb-AI--{{hello}}'
+    this.holepunchLive = holepunch
+    this.refContractsGen = this.libraryRefContracts()
     this.queryBuilder = new HopQuerybuider()
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
@@ -28,6 +30,19 @@ class BbAI extends EventEmitter {
     })
     this.timeHelper.write('bb hello') */
     this.dataParser = new DataParse()
+  }
+
+  /**
+  * get starting ref contracts from public library
+  * @method libraryRefContracts
+  *
+  */
+  libraryRefContracts = function (inFlow) {
+    console.log('public library contracts')
+    // console.log(this.holepunchLive)
+    this.publicLibrary = this.holepunchLive.BeeData.getPublicLibraryRange()
+    // console.log('public library')
+    // console.log(this.publicLibrary)
   }
 
   /**
@@ -65,8 +80,11 @@ class BbAI extends EventEmitter {
         outFlow.data = bbResponseCategory.data
       } else {
         console.log('bb-numbers')
-        let safeFlowQuery = this.queryBuilder.queryInputs(initialDataExtract)
+        // need to  assume question, data, compute and vis contracts need form if from NPL first time.
+        initialDataExtract.action = 'genesis'
+        let safeFlowQuery = this.queryBuilder.minModules(initialDataExtract)
         console.log('bb-safe query build back-------')
+        console.log(safeFlowQuery)
         outFlow.data = safeFlowQuery
       }
     } else if (bbResponseCategory.type === 'upload') {

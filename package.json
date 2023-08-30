@@ -1,6 +1,6 @@
 {
   "name": "beebee-ai",
-  "version": "0.1.6",
+  "version": "0.1.61",
   "description": "BB toolkit helper AI",
   "main": "src/index.js",
   "type": "module",
@@ -15,5 +15,8 @@
   "license": "GPL-3.0-or-later",
   "devDependencies": {
     "mocha": "^10.0.0"
+  },
+  "dependencies": {
+    "hop-query-builder": "^0.0.1"
   }
 }
