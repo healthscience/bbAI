@@ -21,7 +21,7 @@ class BbAI extends EventEmitter {
     super()
     this.hello = 'bb-AI--{{hello}}'
     this.holepunchLive = holepunch
-    this.refContractsGen = this.libraryRefContracts()
+    this.refContractsGen = {}
     this.queryBuilder = new HopQuerybuider()
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
@@ -33,16 +33,23 @@ class BbAI extends EventEmitter {
   }
 
   /**
+  * listener for Holepunch hypercore live and activve
+  * @method libraryRefContracts
+  *
+  */
+  listenHolepunchLive = function () {
+    this.libraryRefContracts()
+  }
+
+  /**
   * get starting ref contracts from public library
   * @method libraryRefContracts
   *
   */
-  libraryRefContracts = function (inFlow) {
-    console.log('public library contracts')
-    // console.log(this.holepunchLive)
-    this.publicLibrary = this.holepunchLive.BeeData.getPublicLibraryRange()
-    // console.log('public library')
-    // console.log(this.publicLibrary)
+  libraryRefContracts = async function () {
+    let publicLibrary = {}
+    publicLibrary = await this.holepunchLive.BeeData.getPublicLibraryRange()
+    return publicLibrary
   }
 
   /**
@@ -82,7 +89,7 @@ class BbAI extends EventEmitter {
         console.log('bb-numbers')
         // need to  assume question, data, compute and vis contracts need form if from NPL first time.
         initialDataExtract.action = 'genesis'
-        let safeFlowQuery = this.queryBuilder.minModules(initialDataExtract)
+        let safeFlowQuery = this.queryBuilder.minModules(initialDataExtract, this.refContractsGen)
         console.log('bb-safe query build back-------')
         console.log(safeFlowQuery)
         outFlow.data = safeFlowQuery
