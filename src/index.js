@@ -37,8 +37,8 @@ class BbAI extends EventEmitter {
   * @method libraryRefContracts
   *
   */
-  listenHolepunchLive = function () {
-    this.libraryRefContracts()
+  listenHolepunchLive = async function () {
+    this.refContractsGen = await this.libraryRefContracts()
   }
 
   /**
