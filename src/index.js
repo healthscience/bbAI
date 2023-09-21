@@ -21,7 +21,7 @@ class BbAI extends EventEmitter {
     super()
     this.hello = 'bb-AI--{{hello}}'
     this.holepunchLive = holepunch
-    this.refContractsGen = {}
+    this.publicLibrary = {}
     this.queryBuilder = new HopQuerybuider()
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
@@ -38,7 +38,7 @@ class BbAI extends EventEmitter {
   *
   */
   listenHolepunchLive = async function () {
-    this.refContractsGen = await this.libraryRefContracts()
+    this.publicLibrary = await this.libraryRefContracts()
   }
 
   /**
@@ -54,16 +54,21 @@ class BbAI extends EventEmitter {
 
   /**
   * NLP conversation
-  * @method NLPflow
+  * @method queryInputs
   *
   */
-  nlpflow = function (inFlow) {
+  nlpflow = async function (inFlow) {
     console.log(inFlow)
-    this.peerQ = inFlow
+    this.peerQ = inFlow.data.text
     // can beebee extract any data?  string input numbers array  file upload csv excel api etc.
-    let initialDataExtract = this.dataParser.numberParse(inFlow)
+    let initialDataExtract = this.dataParser.numberParse(inFlow.data.text)
     console.log('data extract')
     console.log(initialDataExtract)
+    // save to hyperdrive
+    let blindFileName = 'blindt' + inFlow.bbid
+    let saveJSON = await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(initialDataExtract))
+    console.log('saved blind')
+    console.log(saveJSON)
     // pass to validtor FIRST TODO
     let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
     console.log('bb-response complete')
@@ -88,10 +93,10 @@ class BbAI extends EventEmitter {
       } else {
         console.log('bb-numbers')
         // need to  assume question, data, compute and vis contracts need form if from NPL first time.
-        initialDataExtract.action = 'genesis'
-        let safeFlowQuery = this.queryBuilder.minModules(initialDataExtract, this.refContractsGen)
+        initialDataExtract.action = 'blind'
+        let safeFlowQuery = this.queryBuilder.queryPath(initialDataExtract, this.publicLibrary, blindFileName)
         console.log('bb-safe query build back-------')
-        console.log(safeFlowQuery)
+        // console.log(safeFlowQuery)
         outFlow.data = safeFlowQuery
       }
     } else if (bbResponseCategory.type === 'upload') {
