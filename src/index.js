@@ -95,8 +95,6 @@ class BbAI extends EventEmitter {
         // need to  assume question, data, compute and vis contracts need form if from NPL first time.
         initialDataExtract.action = 'blind'
         let safeFlowQuery = this.queryBuilder.queryPath(initialDataExtract, this.publicLibrary, blindFileName)
-        console.log('bb-safe query build back-------')
-        // console.log(safeFlowQuery)
         outFlow.data = safeFlowQuery
       }
     } else if (bbResponseCategory.type === 'upload') {
