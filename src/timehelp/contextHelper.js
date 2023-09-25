@@ -11,14 +11,16 @@
 */
 import util, { callbackify } from 'util'
 import EventEmitter from 'events'
-import DateCalculator from './dateCalculator.js'
+import LocalLLM from '.././LLMapi/llmManager.js'
 import LibraryMatcher from './dateLanguage.js'
+import DateCalculator from './dateCalculator.js'
 
 class ContextHelper extends EventEmitter {
 
   constructor() {
     super()
     this.baseDate = ''
+    this.liveLLM = new LocalLLM()
     this.dateCalc = new DateCalculator()
     this.libraryMatch = new LibraryMatcher()
     this.words = []
@@ -46,7 +48,7 @@ class ContextHelper extends EventEmitter {
   *
   */
   inputLanuage = function (inFlow) {
-    console.log('input language query')
+    console.log('beebee--inputLangue-input language query')
     console.log(inFlow)
     this.words = []
     this.context = []
@@ -56,15 +58,13 @@ class ContextHelper extends EventEmitter {
     this.year = []
     this.timeDirection = 0
     this.responseReply = {}
-
+    // see what the LLM makes of the query
+    let answerLLM = this.liveLLM.feedLLM(inFlow)
     this.words = inFlow.split(" ")
-    console.log(this.words)
     // words suggest past future?
-    let replayOptions = ['hello', 'hopquery', 'sorry', 'prompt']
+    // let replyOptions = ['hello', 'hopquery', 'sorry', 'prompt']
     // let responseType = replayOptions[0]
     this.extractContext()
-    console.log('context')
-    console.log(this.context)
     if (this.context === 'hello') {
       let response = {}
       response.probability = 1
@@ -77,9 +77,10 @@ class ContextHelper extends EventEmitter {
       let queryData = this.queryManager()
       let response = {}
       response.probability = 1
-      response.type = 'query'
+      response.type = 'hopquery'
       response.text = 'How does this query look?'
       response.data = queryData
+      response.llm = answerLLM
       return response
     } else if (this.context === 'upload') {
       console.log('update data help file csvs Pandas AI agent help')
@@ -124,10 +125,10 @@ class ContextHelper extends EventEmitter {
     let queryCategory = ['hello', 'query', 'upload', 'knowledge', 'help'] 
     let conversationWords = {}
     conversationWords['hello'] =  ['hello', 'How are you?']
-    conversationWords['query'] =  ['query', 'chart', 'heart', 'rate', 'steps', 'bmi', 'compare']
+    conversationWords['query'] =  ['query', 'chart', 'heart', 'rate', 'steps', 'bmi', 'compare', 'can', 'what', 'fibonacci']
     conversationWords['upload'] =  ['upload', 'file', 'add', 'data']
     conversationWords['knowledge'] =  ['why', 'can I', 'how', 'support', 'show me']
-    conversationWords['help'] =  ['help', 'bentobox', 'feature', 'tools', 'chart', 'bentospace', 'boards', 'network', 'library', 'invite', 'machine', 'beebee']
+    conversationWords['help'] =  ['help', 'bentobox', 'feature', 'tools', 'bentospace', 'boards', 'network', 'library', 'invite', 'machine', 'beebee']
     let contextScore = ''
     for (let vword of queryCategory) {
       for (let catW of conversationWords[vword]) {
@@ -136,7 +137,7 @@ class ContextHelper extends EventEmitter {
           contextScore = vword
         }
       }
-    } 
+    }
     this.context = contextScore
   }
 
@@ -187,6 +188,7 @@ class ContextHelper extends EventEmitter {
     response.type = 'hopquery'
     response.text = 'Here is a query '
     response.data = newDate //  depending on confidnce in query, maybe send second bast interpretation???
+    response.llm = 'llm-nothing'
     return response
   }
 

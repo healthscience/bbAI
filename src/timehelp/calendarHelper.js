@@ -46,7 +46,7 @@ class CalendarHelper extends EventEmitter {
   *
   */
   inputLanuage = function (inFlow) {
-    console.log('input language query')
+    console.log('beebee--input language query')
     console.log(inFlow)
     this.words = []
     this.context = []

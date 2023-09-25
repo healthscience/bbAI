@@ -60,19 +60,21 @@ class BbAI extends EventEmitter {
   nlpflow = async function (inFlow) {
     console.log(inFlow)
     this.peerQ = inFlow.data.text
+    // pass to validtor FIRST TODO
+    // pass to LLM to see what it makes of the query
+    let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
+    // did the LLM provide numbers to chart, extract date information from questions etc.?
     // can beebee extract any data?  string input numbers array  file upload csv excel api etc.
-    let initialDataExtract = this.dataParser.numberParse(inFlow.data.text)
-    console.log('data extract')
-    console.log(initialDataExtract)
+    let initialDataExtract = []
+    if (bbResponseCategory.llm.data.length > 0) {
+      let buildResonse = { status: true, data: bbResponseCategory.llm.data, label: bbResponseCategory.llm.label }
+      initialDataExtract = buildResonse
+    } else {
+      initialDataExtract = this.dataParser.numberParse(inFlow.data.text)
+    }
     // save to hyperdrive
     let blindFileName = 'blindt' + inFlow.bbid
     let saveJSON = await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(initialDataExtract))
-    console.log('saved blind')
-    console.log(saveJSON)
-    // pass to validtor FIRST TODO
-    let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
-    console.log('bb-response complete')
-    console.log(bbResponseCategory)
     // need rules outFlow logic to order reponse and append data where relevant.
     let outFlow = {}
     outFlow.type = 'bbai'
@@ -88,10 +90,8 @@ class BbAI extends EventEmitter {
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
       if (initialDataExtract.status !== true) {
-        console.log('bb--no number')
         outFlow.data = bbResponseCategory.data
       } else {
-        console.log('bb-numbers')
         // need to  assume question, data, compute and vis contracts need form if from NPL first time.
         initialDataExtract.action = 'blind'
         let safeFlowQuery = this.queryBuilder.queryPath(initialDataExtract, this.publicLibrary, blindFileName)
