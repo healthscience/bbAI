@@ -11,9 +11,9 @@
 */
 import util, { callbackify } from 'util'
 import EventEmitter from 'events'
-import LocalLLM from '.././LLMapi/llmManager.js'
-import LibraryMatcher from './dateLanguage.js'
-import DateCalculator from './dateCalculator.js'
+import LocalLLM from '../LLMapi/llmManager.js'
+import LibraryMatcher from '../LLMapi/helpers/dateLanguage.js'
+import DateCalculator from '../LLMapi/helpers/dateCalculator.js'
 
 class ContextHelper extends EventEmitter {
 
@@ -23,14 +23,8 @@ class ContextHelper extends EventEmitter {
     this.liveLLM = new LocalLLM()
     this.dateCalc = new DateCalculator()
     this.libraryMatch = new LibraryMatcher()
-    this.words = []
-    this.time = ''
-    this.day = []
-    this.month = []
-    this.year = []
-    this.timeDirection = 0
-    this.context = []
     this.responseReply = {}
+    this.day = []
   }
 
   /**
@@ -48,41 +42,32 @@ class ContextHelper extends EventEmitter {
   *
   */
   inputLanuage = function (inFlow) {
-    console.log('beebee--inputLangue-input language query')
-    console.log(inFlow)
-    this.words = []
-    this.context = []
-    this.time = ''
-    this.day = []
-    this.month = []
-    this.year = []
-    this.timeDirection = 0
     this.responseReply = {}
     // see what the LLM makes of the query
     let answerLLM = this.liveLLM.feedLLM(inFlow)
-    this.words = inFlow.split(" ")
+    // console.log('what has LLM brought back')
+    // console.log(answerLLM)
     // words suggest past future?
     // let replyOptions = ['hello', 'hopquery', 'sorry', 'prompt']
     // let responseType = replayOptions[0]
-    this.extractContext()
-    if (this.context === 'hello') {
+    // this.extractContext()
+    // used returned LLM data to prepare response messages
+    if (answerLLM.context.score === 'hello') {
       let response = {}
       response.probability = 1
       response.type = 'hello'
       response.text = 'hello how can beebee help?'
       response.data = 'hello how can beebee help?'
       return response
-    } else if (this.context === 'query') {
+    } else if (answerLLM.context.score === 'query') {
       console.log('query forming HOP query suggestion')
-      let queryData = this.queryManager()
       let response = {}
       response.probability = 1
       response.type = 'hopquery'
       response.text = 'How does this query look?'
-      response.data = queryData
-      response.llm = answerLLM
+      response.data = answerLLM.sequence
       return response
-    } else if (this.context === 'upload') {
+    } else if (answerLLM.context.score === 'upload') {
       console.log('update data help file csvs Pandas AI agent help')
       let response = {}
       response.probability = 1
@@ -90,7 +75,7 @@ class ContextHelper extends EventEmitter {
       response.text = 'Please use the upload file button'
       response.data = {}
       return response
-    } else if (this.context === 'knowledge') {
+    } else if (answerLLM.context.score === 'knowledge') {
       console.log('question for knowledge science references etc.')
       let response = {}
       response.probability = 1
@@ -98,7 +83,7 @@ class ContextHelper extends EventEmitter {
       response.text = 'Heart rate is a measure of the blood flow and ...'
       response.data = {}
       return response
-    } else if (this.context === 'help') {
+    } else if (answerLLM.context.score === 'help') {
       console.log('How to use bentobox-ds')
       let response = {}
       response.probability = 1
@@ -107,55 +92,11 @@ class ContextHelper extends EventEmitter {
       response.data = {}
       return response
     } else {
-      this.libraryMatch.extractTimeDirection(this.words)
-      this.libraryMatch.extractDates(this.words)
-      let response = this.interpretate()
+      let response = 'nothing to say' // this.interpretate()
       return response
     }
   }
 
-  /**
-  * extract time day month year
-  * @method extractContext
-  *
-  */
-  extractContext = function () {
-    // parse natural language
-    // categorise general type of query
-    let queryCategory = ['hello', 'query', 'upload', 'knowledge', 'help'] 
-    let conversationWords = {}
-    conversationWords['hello'] =  ['hello', 'How are you?']
-    conversationWords['query'] =  ['query', 'chart', 'heart', 'rate', 'steps', 'bmi', 'compare', 'can', 'what', 'fibonacci']
-    conversationWords['upload'] =  ['upload', 'file', 'add', 'data']
-    conversationWords['knowledge'] =  ['why', 'can I', 'how', 'support', 'show me']
-    conversationWords['help'] =  ['help', 'bentobox', 'feature', 'tools', 'bentospace', 'boards', 'network', 'library', 'invite', 'machine', 'beebee']
-    let contextScore = ''
-    for (let vword of queryCategory) {
-      for (let catW of conversationWords[vword]) {
-        let matchWord = this.words.includes(catW)
-        if(matchWord === true ) {
-          contextScore = vword
-        }
-      }
-    }
-    this.context = contextScore
-  }
-
-  
-  /**
-  * bring together all context building and suggested HOP query
-  * @method queryManager
-  *
-  */
-  queryManager = function () {
-    let dataQuery = {}
-    dataQuery.library = this.libraryMatch.probabiltyScoreMatch(this.words)
-    let timeContext = {}
-    timeContext.direction = this.libraryMatch.extractTimeDirection(this.words)
-    timeContext.words = this.libraryMatch.extractDates(this.words)
-    dataQuery.time = timeContext
-    return dataQuery
-  }
 
   /**
   * take in all assessment and build query
@@ -192,27 +133,6 @@ class ContextHelper extends EventEmitter {
     return response
   }
 
-  /**
-  * return the calendar info.
-  * @method calendarInfo
-  *
-  */
-  calendarInfo = function () {
-    // data info extracted
-    let calendarInfo = {}
-    calendarInfo.query = this.
-    calendarInfo.words = this.words
-    calendarInfo.time = this.time
-    calendarInfo.day = this.day
-    calendarInfo.month = this.month
-    calendarInfo.year = this.year
-    this.responseReply = calendarInfo
-  }
-
-  age () {
-    let date = new Date()
-    return date.getFullYear() - this.year
-  }
 }
 
 export default ContextHelper

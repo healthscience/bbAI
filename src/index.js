@@ -12,8 +12,7 @@
 import util from 'util'
 import EventEmitter from 'events'
 import HopQuerybuider from 'hop-query-builder'
-import DataParse from './dataExtract/dataParse.js'
-import ContextHelp from './timehelp/contextHelper.js'
+import ContextHelp from './context/contextHelper.js'
 
 class BbAI extends EventEmitter {
 
@@ -29,7 +28,6 @@ class BbAI extends EventEmitter {
       console.log(`Received data: "${data}"`)
     })
     this.timeHelper.write('bb hello') */
-    this.dataParser = new DataParse()
   }
 
   /**
@@ -64,17 +62,9 @@ class BbAI extends EventEmitter {
     // pass to LLM to see what it makes of the query
     let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
     // did the LLM provide numbers to chart, extract date information from questions etc.?
-    // can beebee extract any data?  string input numbers array  file upload csv excel api etc.
-    let initialDataExtract = []
-    if (bbResponseCategory.llm.data.length > 0) {
-      let buildResonse = { status: true, data: bbResponseCategory.llm.data, label: bbResponseCategory.llm.label }
-      initialDataExtract = buildResonse
-    } else {
-      initialDataExtract = this.dataParser.numberParse(inFlow.data.text)
-    }
     // save to hyperdrive
     let blindFileName = 'blindt' + inFlow.bbid
-    let saveJSON = await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(initialDataExtract))
+    await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data))
     // need rules outFlow logic to order reponse and append data where relevant.
     let outFlow = {}
     outFlow.type = 'bbai'
@@ -89,12 +79,14 @@ class BbAI extends EventEmitter {
       outFlow.type = 'hopquery'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
-      if (initialDataExtract.status !== true) {
+      if (bbResponseCategory.data.status !== true) {
         outFlow.data = bbResponseCategory.data
       } else {
         // need to  assume question, data, compute and vis contracts need form if from NPL first time.
-        initialDataExtract.action = 'blind'
-        let safeFlowQuery = this.queryBuilder.queryPath(initialDataExtract, this.publicLibrary, blindFileName)
+        let hqbHolder = {}
+        hqbHolder.action = 'blind'
+        hqbHolder.data = bbResponseCategory.data
+        let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
         outFlow.data = safeFlowQuery
       }
     } else if (bbResponseCategory.type === 'upload') {
