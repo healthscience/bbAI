@@ -56,15 +56,18 @@ class BbAI extends EventEmitter {
   *
   */
   nlpflow = async function (inFlow) {
+    console.log('beebee--nplflow')
     console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
     // pass to LLM to see what it makes of the query
     let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
+    console.log('beebee back from LLM')
+    console.log(bbResponseCategory)
     // did the LLM provide numbers to chart, extract date information from questions etc.?
     // save to hyperdrive
     let blindFileName = 'blindt' + inFlow.bbid
-    await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data))
+    await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
     // need rules outFlow logic to order reponse and append data where relevant.
     let outFlow = {}
     outFlow.type = 'bbai'
@@ -79,13 +82,15 @@ class BbAI extends EventEmitter {
       outFlow.type = 'hopquery'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
-      if (bbResponseCategory.data.status !== true) {
-        outFlow.data = bbResponseCategory.data
+      if (bbResponseCategory.data.sequence.status !== true) {
+        outFlow.data = bbResponseCategory.sequence.data
       } else {
-        // need to  assume question, data, compute and vis contracts need form if from NPL first time.
+        // need to  assume question, data, compute and vis contracts need form if from NLP first time.
         let hqbHolder = {}
         hqbHolder.action = 'blind'
-        hqbHolder.data = bbResponseCategory.data
+        hqbHolder.data = bbResponseCategory
+        console.log('intoHQB---------------')
+        console.log(hqbHolder)
         let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
         outFlow.data = safeFlowQuery
       }

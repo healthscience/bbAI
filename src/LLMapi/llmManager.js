@@ -9,18 +9,20 @@
 * @license    http://www.gnu.org/licenses/old-licenses/gpl-3.0.html
 * @version    $Id$
 */
-import util, { callbackify } from 'util'
+import util from 'util'
 import EventEmitter from 'events'
 import DataParse from './dataExtract/dataParse.js'
-import CalendarHelper from './helpers/calendarHelper.js'
 import SequenceBuilder from './dataExtract/sequencyBuilder.js'
+import CalendarHelper from './helpers/calendarHelper.js'
+import VisBuilder from './helpers/visHelper.js'
 
 class LlmManger extends EventEmitter {
 
   constructor() {
     super()
-    this.dataParser = new DataParse()
+    this.visContext = new VisBuilder()
     this.calendarContext = new CalendarHelper()
+    this.dataParser = new DataParse()
     this.sequenceManager = new SequenceBuilder()
   }
 
@@ -40,7 +42,10 @@ class LlmManger extends EventEmitter {
   */
   feedLLM = function (text) {
     let words = text.split(" ")
+    // which category of question?
     let categoriseInput = this.extractContext(text)
+    // type of chart or visualisation?
+    let visStyle = this.visContext.matchStyle(words)
     // example of number sequences
     let sequenceData = this.sequenceManager.sequenceFibonacci(words)
     // can beebee extract any data?  string input numbers array  file upload csv excel api etc.
@@ -53,12 +58,13 @@ class LlmManger extends EventEmitter {
     }
     let LLMcontext = {}
     LLMcontext.context = categoriseInput
+    LLMcontext.visstyle = visStyle
     LLMcontext.sequence = initialDataExtract
     return LLMcontext
   }
 
   /**
-  * extract time day month year
+  * what type of question category is likey to be?
   * @method extractContext
   *
   */

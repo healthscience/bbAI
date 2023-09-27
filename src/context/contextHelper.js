@@ -45,8 +45,8 @@ class ContextHelper extends EventEmitter {
     this.responseReply = {}
     // see what the LLM makes of the query
     let answerLLM = this.liveLLM.feedLLM(inFlow)
-    // console.log('what has LLM brought back')
-    // console.log(answerLLM)
+    console.log('what has LLM brought back')
+    console.log(answerLLM)
     // words suggest past future?
     // let replyOptions = ['hello', 'hopquery', 'sorry', 'prompt']
     // let responseType = replayOptions[0]
@@ -65,7 +65,7 @@ class ContextHelper extends EventEmitter {
       response.probability = 1
       response.type = 'hopquery'
       response.text = 'How does this query look?'
-      response.data = answerLLM.sequence
+      response.data = answerLLM
       return response
     } else if (answerLLM.context.score === 'upload') {
       console.log('update data help file csvs Pandas AI agent help')
@@ -128,7 +128,7 @@ class ContextHelper extends EventEmitter {
     response.probability = 0.51
     response.type = 'hopquery'
     response.text = 'Here is a query '
-    response.data = newDate //  depending on confidnce in query, maybe send second bast interpretation???
+    response.data = newDate //  depending on confidnce in query, maybe send second best interpretation???
     response.llm = 'llm-nothing'
     return response
   }
