@@ -37,7 +37,7 @@ class LlmManger extends EventEmitter {
 
   /**
   * ask LLM local and open-assistant
-  * @method numberParse
+  * @method feedLLM
   *
   */
   feedLLM = function (text) {

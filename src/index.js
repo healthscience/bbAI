@@ -62,12 +62,15 @@ class BbAI extends EventEmitter {
     // pass to validtor FIRST TODO
     // pass to LLM to see what it makes of the query
     let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
-    console.log('beebee back from LLM')
+    console.log('beebee---back from LLM')
     console.log(bbResponseCategory)
     // did the LLM provide numbers to chart, extract date information from questions etc.?
     // save to hyperdrive
-    let blindFileName = 'blindt' + inFlow.bbid
-    await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+    let blindFileName
+    if (bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload') {
+      blindFileName = 'blindt' + inFlow.bbid
+      await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+    }
     // need rules outFlow logic to order reponse and append data where relevant.
     let outFlow = {}
     outFlow.type = 'bbai'
@@ -97,17 +100,17 @@ class BbAI extends EventEmitter {
     } else if (bbResponseCategory.type === 'upload') {
       outFlow.type = 'upload'
       outFlow.text = bbResponseCategory.text
-      outFlow.query = true
+      outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'knowledge') {
       outFlow.type = 'knowledge'
       outFlow.text = bbResponseCategory.text
-      outFlow.query = true
+      outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'help') {
       outFlow.type = 'help'
       outFlow.text = bbResponseCategory.text
-      outFlow.query = true
+      outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'sorry') {
       outFlow.text = 'Sorry beebee is unable to help.'
@@ -125,7 +128,19 @@ class BbAI extends EventEmitter {
   }
 
   /**
-  * Ask other AI's
+  * what can be learnt from language 
+  * @method languageAgent
+  *
+  */
+  languageAgent = function (words) {
+    let bbResponseCategory = this.contextHelper.inputLanuage(words)
+    console.log('language agents')
+    console.log(bbResponseCategory)
+    return bbResponseCategory
+  }
+
+  /**
+  * Ask other AI agents / models 
   * @method aiAsk
   *
   */
@@ -137,6 +152,37 @@ class BbAI extends EventEmitter {
     if (caleReply === 'no-prediction') {
       outFlow.data = 'This is not operational yet, still testing' // call prediction flow
     }
+    return outFlow
+  }
+
+  /**
+  * manage a future prediction
+  * @method managePrediction
+  *
+  */
+  managePrediction = function (message) {
+    // what context set  free text or specific model
+    let languageContext = this.languageAgent(message.data.question)
+    // has a specific model been asked for
+    let safeFlowQuery = {}
+    if (message.data.model === 'linear-regression') {
+      console.log('linear regression stats 101')
+      let hqbHolder = {}
+      hqbHolder.action = 'future'
+      hqbHolder.data = languageContext
+      let futureFileName = 'future-' + message.bbid
+      safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, futureFileName)
+    } else if (message.data.model === 'autogression') {
+
+    } else if (message.data.model === 'finetuning') {
+
+    } else if (message.data.model === 'foundaional') {
+
+    }
+    let outFlow = {}
+    outFlow.type = 'beebee-predict'
+    outFlow.action = 'prediction'
+    outFlow.data = safeFlowQuery
     return outFlow
   }
 

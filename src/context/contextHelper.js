@@ -72,7 +72,7 @@ class ContextHelper extends EventEmitter {
       let response = {}
       response.probability = 1
       response.type = 'upload'
-      response.text = 'Please use the upload file button'
+      response.text = 'Sorry, HOP has no data for that. Please upload or add url where beebee can find the data.'
       response.data = {}
       return response
     } else if (answerLLM.context.score === 'knowledge') {
