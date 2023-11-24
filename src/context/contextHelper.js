@@ -45,8 +45,8 @@ class ContextHelper extends EventEmitter {
     this.responseReply = {}
     // see what the LLM makes of the query
     let answerLLM = this.liveLLM.feedLLM(inFlow)
-    console.log('what has LLM brought back')
-    console.log(answerLLM)
+    // console.log('what has LLM brought back')
+    // console.log(answerLLM)
     // words suggest past future?
     // let replyOptions = ['hello', 'hopquery', 'sorry', 'prompt']
     // let responseType = replayOptions[0]
@@ -60,7 +60,7 @@ class ContextHelper extends EventEmitter {
       response.data = 'hello how can beebee help?'
       return response
     } else if (answerLLM.context.score === 'query') {
-      console.log('query forming HOP query suggestion')
+      console.log('LLM--query suggested')
       let response = {}
       response.probability = 1
       response.type = 'hopquery'
@@ -73,6 +73,14 @@ class ContextHelper extends EventEmitter {
       response.probability = 1
       response.type = 'upload'
       response.text = 'Sorry, HOP has no data for that. Please upload or add url where beebee can find the data.'
+      response.data = {}
+      return response
+    } else if (answerLLM.context.score === 'library') {
+      console.log('Library question/query')
+      let response = {}
+      response.probability = 1
+      response.type = 'library'
+      response.text = 'Querying library for you.'
       response.data = {}
       return response
     } else if (answerLLM.context.score === 'knowledge') {

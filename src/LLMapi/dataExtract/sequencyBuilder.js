@@ -42,7 +42,6 @@ class sequenceBuilder extends EventEmitter {
       }
       // any numbers in text
       let extractDigit = numberText.filter(e => e === word)
-      console.log(extractDigit)
       if (extractDigit[0] !== undefined) {
         digitsFound.push(extractDigit[0])
       }

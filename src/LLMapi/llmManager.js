@@ -41,9 +41,12 @@ class LlmManger extends EventEmitter {
   *
   */
   feedLLM = function (text) {
-    let words = text.split(" ")
+    // console.log('text')
+    //console.log(text)
+    let words = text.toLowerCase().split(" ")
     // which category of question?
-    let categoriseInput = this.extractContext(text)
+    let categoriseInput = this.extractContext(words)
+    console.log(categoriseInput)
     // type of chart or visualisation?
     let visStyle = this.visContext.matchStyle(words)
     // example of number sequences
@@ -72,13 +75,14 @@ class LlmManger extends EventEmitter {
     // parse natural language
     let context = {}
     // categorise general type of query
-    let queryCategory = ['hello', 'query', 'upload', 'knowledge', 'help'] 
+    let queryCategory = ['hello', 'query', 'upload', 'knowledge', 'library', 'help'] 
     let conversationWords = {}
     conversationWords['hello'] =  ['hello', 'How are you?']
     conversationWords['query'] =  ['query', 'chart', 'heart', 'rate', 'steps', 'bmi', 'compare', 'can', 'what', 'fibonacci']
     conversationWords['upload'] =  ['upload', 'file', 'add', 'data']
     conversationWords['knowledge'] =  ['why', 'can I', 'how', 'support', 'show me']
-    conversationWords['help'] =  ['help', 'bentobox', 'feature', 'tools', 'bentospace', 'boards', 'network', 'library', 'invite', 'machine', 'beebee']
+    conversationWords['library'] =  ['library', 'network', 'list', 'experiment', 'datatype', 'data', 'join', 'wearable', 'air', 'water']
+    conversationWords['help'] =  ['help', 'bentobox', 'feature', 'tools', 'bentospace', 'boards', 'invite', 'machine', 'beebee']
     let contextScore = ''
     for (let vword of queryCategory) {
       for (let catW of conversationWords[vword]) {

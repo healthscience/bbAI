@@ -56,8 +56,8 @@ class BbAI extends EventEmitter {
   *
   */
   nlpflow = async function (inFlow) {
-    console.log('beebee--nplflow')
-    console.log(inFlow)
+    // console.log('beebee--nplflow')
+    // console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
     // pass to LLM to see what it makes of the query
@@ -67,7 +67,7 @@ class BbAI extends EventEmitter {
     // did the LLM provide numbers to chart, extract date information from questions etc.?
     // save to hyperdrive
     let blindFileName
-    if (bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload') {
+    if (bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library') {
       blindFileName = 'blindt' + inFlow.bbid
       await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
     }
@@ -97,6 +97,15 @@ class BbAI extends EventEmitter {
         let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
         outFlow.data = safeFlowQuery
       }
+    } else if (bbResponseCategory.type === 'library') {
+      console.log('form query for holepunch network library and return')
+      // use HQB for the library to build query and get data (leave 'higher' level for manage flows through HOP)
+      let peerLibdata = await this.holepunchLive.BeeData.getPeerLibraryRange()
+      let returnPeerData = this.queryBuilder.libraryPath('query', 'peerlibrary', peerLibdata)
+      outFlow.type = 'library-peerlibrary'
+      outFlow.text = bbResponseCategory.text
+      outFlow.query = false
+      outFlow.data = returnPeerData
     } else if (bbResponseCategory.type === 'upload') {
       outFlow.type = 'upload'
       outFlow.text = bbResponseCategory.text
@@ -161,6 +170,8 @@ class BbAI extends EventEmitter {
   *
   */
   managePrediction = function (message) {
+    console.log('managempriduction')
+    console.log(message)
     // what context set  free text or specific model
     let languageContext = this.languageAgent(message.data.question)
     // has a specific model been asked for
@@ -169,10 +180,10 @@ class BbAI extends EventEmitter {
       console.log('linear regression stats 101')
       let hqbHolder = {}
       hqbHolder.action = 'future'
-      hqbHolder.data = languageContext
+      hqbHolder.data = message.data.nxp  // languageContext
       let futureFileName = 'future-' + message.bbid
       safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, futureFileName)
-    } else if (message.data.model === 'autogression') {
+    } else if (message.data.model === 'autoregression') {
 
     } else if (message.data.model === 'finetuning') {
 
