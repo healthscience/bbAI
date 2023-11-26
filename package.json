@@ -1,6 +1,6 @@
 {
   "name": "beebee-ai",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "BB toolkit helper AI",
   "main": "src/index.js",
   "type": "module",
