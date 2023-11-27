@@ -45,12 +45,6 @@ class ContextHelper extends EventEmitter {
     this.responseReply = {}
     // see what the LLM makes of the query
     let answerLLM = this.liveLLM.feedLLM(inFlow)
-    // console.log('what has LLM brought back')
-    // console.log(answerLLM)
-    // words suggest past future?
-    // let replyOptions = ['hello', 'hopquery', 'sorry', 'prompt']
-    // let responseType = replayOptions[0]
-    // this.extractContext()
     // used returned LLM data to prepare response messages
     if (answerLLM.context.score === 'hello') {
       let response = {}
@@ -60,7 +54,6 @@ class ContextHelper extends EventEmitter {
       response.data = 'hello how can beebee help?'
       return response
     } else if (answerLLM.context.score === 'query') {
-      console.log('LLM--query suggested')
       let response = {}
       response.probability = 1
       response.type = 'hopquery'
@@ -68,7 +61,6 @@ class ContextHelper extends EventEmitter {
       response.data = answerLLM
       return response
     } else if (answerLLM.context.score === 'upload') {
-      console.log('update data help file csvs Pandas AI agent help')
       let response = {}
       response.probability = 1
       response.type = 'upload'
@@ -76,7 +68,6 @@ class ContextHelper extends EventEmitter {
       response.data = {}
       return response
     } else if (answerLLM.context.score === 'library') {
-      console.log('Library question/query')
       let response = {}
       response.probability = 1
       response.type = 'library'
@@ -84,7 +75,6 @@ class ContextHelper extends EventEmitter {
       response.data = {}
       return response
     } else if (answerLLM.context.score === 'knowledge') {
-      console.log('question for knowledge science references etc.')
       let response = {}
       response.probability = 1
       response.type = 'knowledge'
@@ -92,7 +82,6 @@ class ContextHelper extends EventEmitter {
       response.data = {}
       return response
     } else if (answerLLM.context.score === 'help') {
-      console.log('How to use bentobox-ds')
       let response = {}
       response.probability = 1
       response.type = 'help'

@@ -24,10 +24,6 @@ class BbAI extends EventEmitter {
     this.queryBuilder = new HopQuerybuider()
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
-    /* this.timeHelper.on('data', (data) => {
-      console.log(`Received data: "${data}"`)
-    })
-    this.timeHelper.write('bb hello') */
   }
 
   /**
@@ -56,14 +52,10 @@ class BbAI extends EventEmitter {
   *
   */
   nlpflow = async function (inFlow) {
-    // console.log('beebee--nplflow')
-    // console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
     // pass to LLM to see what it makes of the query
     let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
-    console.log('beebee---back from LLM')
-    console.log(bbResponseCategory)
     // did the LLM provide numbers to chart, extract date information from questions etc.?
     // save to hyperdrive
     let blindFileName
@@ -81,7 +73,6 @@ class BbAI extends EventEmitter {
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'hopquery') {
-      console.log('bb--hopquery')
       outFlow.type = 'hopquery'
       outFlow.text = bbResponseCategory.text
       outFlow.query = true
@@ -92,13 +83,15 @@ class BbAI extends EventEmitter {
         let hqbHolder = {}
         hqbHolder.action = 'blind'
         hqbHolder.data = bbResponseCategory
-        console.log('intoHQB---------------')
-        console.log(hqbHolder)
         let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
         outFlow.data = safeFlowQuery
       }
+    } else if (bbResponseCategory.type === 'upload') {
+      outFlow.type = 'upload'
+      outFlow.text = bbResponseCategory.text
+      outFlow.query = false
+      outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'library') {
-      console.log('form query for holepunch network library and return')
       // use HQB for the library to build query and get data (leave 'higher' level for manage flows through HOP)
       let peerLibdata = await this.holepunchLive.BeeData.getPeerLibraryRange()
       let returnPeerData = this.queryBuilder.libraryPath('query', 'peerlibrary', peerLibdata)
@@ -143,8 +136,6 @@ class BbAI extends EventEmitter {
   */
   languageAgent = function (words) {
     let bbResponseCategory = this.contextHelper.inputLanuage(words)
-    console.log('language agents')
-    console.log(bbResponseCategory)
     return bbResponseCategory
   }
 
@@ -170,14 +161,11 @@ class BbAI extends EventEmitter {
   *
   */
   managePrediction = function (message) {
-    console.log('managempriduction')
-    console.log(message)
     // what context set  free text or specific model
     let languageContext = this.languageAgent(message.data.question)
     // has a specific model been asked for
     let safeFlowQuery = {}
     if (message.data.model === 'linear-regression') {
-      console.log('linear regression stats 101')
       let hqbHolder = {}
       hqbHolder.action = 'future'
       hqbHolder.data = message.data.nxp  // languageContext
@@ -187,7 +175,7 @@ class BbAI extends EventEmitter {
 
     } else if (message.data.model === 'finetuning') {
 
-    } else if (message.data.model === 'foundaional') {
+    } else if (message.data.model === 'foundational') {
 
     }
     let outFlow = {}
