@@ -41,12 +41,9 @@ class LlmManger extends EventEmitter {
   *
   */
   feedLLM = function (text) {
-    // console.log('text')
-    //console.log(text)
     let words = text.toLowerCase().split(" ")
     // which category of question?
     let categoriseInput = this.extractContext(words)
-    console.log(categoriseInput)
     // type of chart or visualisation?
     let visStyle = this.visContext.matchStyle(words)
     // example of number sequences
