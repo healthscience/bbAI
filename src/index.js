@@ -143,8 +143,6 @@ class BbAI extends EventEmitter {
       outFlow.query = false
       outFlow.data = 'sorry beebee cannot help.  beebee is still learning.'
     }
-    console.log('beebee--outflow')
-    console.log(outFlow)
     return outFlow
   }
 
