@@ -1,6 +1,6 @@
 'use strict'
 /**
-*  Help Interface to BentoBox - AI
+*  beebee Help Interface to BentoBox - AI
 *
 *
 * @class BbAI
@@ -16,11 +16,11 @@ import ContextHelp from './context/contextHelper.js'
 
 class BbAI extends EventEmitter {
 
-  constructor(holepunch) {
+  constructor(xlibrary) {
     super()
     this.hello = 'bb-AI--{{hello}}'
-    this.holepunchLive = holepunch
     this.publicLibrary = {}
+    this.nxtLibrary = xlibrary
     this.queryBuilder = new HopQuerybuider()
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
@@ -42,8 +42,23 @@ class BbAI extends EventEmitter {
   */
   libraryRefContracts = async function () {
     let publicLibrary = {}
-    publicLibrary = await this.holepunchLive.BeeData.getPublicLibraryRange()
+    publicLibrary = await this.nxtLibrary.liveHolepunch.BeeData.getPublicLibraryRange()
     return publicLibrary
+  }
+
+  /**
+  * message from peer network direct
+  * @method networkPeerdirect
+  *
+  */
+  networkPeerdirect = function (data) {
+    let outFlow = {}
+    outFlow.type = 'network-notification'
+    outFlow.action = 'chart'
+    outFlow.text = 'a peer has send chart data'
+    outFlow.query = false
+    outFlow.bbid = data.hop.bbid
+    this.emit('peer-bb-direct', outFlow)
   }
 
   /**
@@ -58,11 +73,13 @@ class BbAI extends EventEmitter {
     let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
     // did the LLM provide numbers to chart, extract date information from questions etc.?
     // save to hyperdrive
+    console.log('before hop cont')
     let blindFileName
     if (bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library') {
       blindFileName = 'blindt' + inFlow.bbid
-      await this.holepunchLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+      await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
     }
+    console.log('after hoplepuch call')
     // need rules outFlow logic to order reponse and append data where relevant.
     let outFlow = {}
     outFlow.type = 'bbai'
@@ -92,13 +109,13 @@ class BbAI extends EventEmitter {
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'library') {
+      console.log('beebee-ai--this.nxtLibrary')
+      // console.log(this.nxtLibrary)
+      bbResponseCategory.action = 'start'
+      bbResponseCategory.text = bbResponseCategory.text
+      bbResponseCategory.origin = 'beebee'
       // use HQB for the library to build query and get data (leave 'higher' level for manage flows through HOP)
-      let peerLibdata = await this.holepunchLive.BeeData.getPeerLibraryRange()
-      let returnPeerData = this.queryBuilder.libraryPath('query', 'peerlibrary', peerLibdata)
-      outFlow.type = 'library-peerlibrary'
-      outFlow.text = bbResponseCategory.text
-      outFlow.query = false
-      outFlow.data = returnPeerData
+      outFlow = await this.nxtLibrary.libManager.libraryManage(bbResponseCategory)
     } else if (bbResponseCategory.type === 'upload') {
       outFlow.type = 'upload'
       outFlow.text = bbResponseCategory.text
@@ -126,6 +143,8 @@ class BbAI extends EventEmitter {
       outFlow.query = false
       outFlow.data = 'sorry beebee cannot help.  beebee is still learning.'
     }
+    console.log('beebee--outflow')
+    console.log(outFlow)
     return outFlow
   }
 
