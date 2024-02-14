@@ -63,7 +63,7 @@ class BbAI extends EventEmitter {
 
   /**
   * NLP conversation
-  * @method queryInputs
+  * @method nlpflow
   *
   */
   nlpflow = async function (inFlow) {
