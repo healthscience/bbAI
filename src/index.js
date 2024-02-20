@@ -28,7 +28,7 @@ class BbAI extends EventEmitter {
 
   /**
   * listener for Holepunch hypercore live and activve
-  * @method libraryRefContracts
+  * @method listenHolepunchLive
   *
   */
   listenHolepunchLive = async function () {
@@ -67,6 +67,7 @@ class BbAI extends EventEmitter {
   *
   */
   nlpflow = async function (inFlow) {
+    console.log('nplp')
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
     // pass to LLM to see what it makes of the query
@@ -100,8 +101,16 @@ class BbAI extends EventEmitter {
         let hqbHolder = {}
         hqbHolder.action = 'blind'
         hqbHolder.data = bbResponseCategory
-        let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
-        outFlow.data = safeFlowQuery
+        // first check public library is present if not ask for it again
+        let setAlready = Object.keys(this.publicLibrary)
+        if (setAlready.length === 0) {
+          await this.listenHolepunchLive()
+          let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
+          outFlow.data = safeFlowQuery
+        } else {
+          let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
+          outFlow.data = safeFlowQuery
+        }
       }
     } else if (bbResponseCategory.type === 'upload') {
       outFlow.type = 'upload'
