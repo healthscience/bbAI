@@ -13,6 +13,7 @@ import util from 'util'
 import EventEmitter from 'events'
 import HopQuerybuider from 'hop-query-builder'
 import ContextHelp from './context/contextHelper.js'
+import { parse } from 'path'
 
 class BbAI extends EventEmitter {
 
@@ -68,19 +69,43 @@ class BbAI extends EventEmitter {
   */
   nlpflow = async function (inFlow) {
     console.log('nplp')
+    console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
-    // pass to LLM to see what it makes of the query
-    let bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
-    // did the LLM provide numbers to chart, extract date information from questions etc.?
-    // save to hyperdrive
-    console.log('before hop cont')
+    // does this flow free text only or includes file data?
+    let bbResponseCategory = {}
     let blindFileName
-    if (bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library') {
+    if (inFlow.data?.filedata) {
+      console.log('file data')
+      // save the data to hyperdrive
       blindFileName = 'blindt' + inFlow.bbid
+      // temp. prepare the data into an array for y axis and x time
+      let tempFilePrep = this.blindFiledataPrep(inFlow.data.content, inFlow.data.context)
+      let fileAction = {}
+      fileAction.probability = 1
+      fileAction.type = 'hopquery'
+      fileAction.text = 'Please chart the data in the file'
+      let summarydata = {
+        context: { score: 'query', calendar: '' },
+        visstyle: [ 'line' ],
+        sequence: { status: true, data: tempFilePrep.x, label: tempFilePrep.y }
+      }
+      fileAction.data = summarydata
+      bbResponseCategory = fileAction
       await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+    } else {
+      console.log('no file data')
+      // pass to LLM to see what it makes of the query
+      bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
+      // did the LLM provide numbers to chart, extract date information from questions etc.?
+      // save to hyperdrive
+      if (bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library') {
+        blindFileName = 'blindt' + inFlow.bbid
+        await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+      }
     }
-    console.log('after hoplepuch call')
+    console.log('bb cat bak')
+    console.log(bbResponseCategory.data)
     // need rules outFlow logic to order reponse and append data where relevant.
     let outFlow = {}
     outFlow.type = 'bbai'
@@ -209,6 +234,23 @@ class BbAI extends EventEmitter {
     outFlow.action = 'prediction'
     outFlow.data = safeFlowQuery
     return outFlow
+  }
+
+
+  /**
+  *  temp hack to read csv file
+  * @method 
+  *
+  */
+  blindFiledataPrep = function (message, context) {
+    // make parser structure
+    let parseInfo = {}
+    parseInfo = { content: message, info: { cnumber: 0 }, context: context }
+    let parseData = this.nxtLibrary.liveHolepunch.DriveFiles.fileUtility.TEMPwebCSVparse(parseInfo)
+    let dataTimeseries = {}
+    dataTimeseries.x = parseData.data // [6, 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, 6]
+    dataTimeseries.y = parseData.label // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
+    return dataTimeseries
   }
 
 }
