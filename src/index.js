@@ -13,7 +13,7 @@ import util from 'util'
 import EventEmitter from 'events'
 import HopQuerybuider from 'hop-query-builder'
 import ContextHelp from './context/contextHelper.js'
-import { parse } from 'path'
+import CaleAI from 'cale-evolution'
 
 class BbAI extends EventEmitter {
 
@@ -23,6 +23,8 @@ class BbAI extends EventEmitter {
     this.publicLibrary = {}
     this.nxtLibrary = xlibrary
     this.queryBuilder = new HopQuerybuider()
+    this.caleAI = {}
+    this.gatherAI()
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
   }
@@ -34,6 +36,27 @@ class BbAI extends EventEmitter {
   */
   listenHolepunchLive = async function () {
     this.publicLibrary = await this.libraryRefContracts()
+  }
+
+  /**
+  * bring AI's to be
+  * @method gatherAI
+  *
+  */
+  gatherAI = function () {
+    this.caleAI = new CaleAI()
+  }
+
+  /**
+  * coordinate between AI and SafeFlow or other ai's
+  * @method coordinationAI
+  *
+  */
+  coordinationAI = function (task) {
+    // setup, data, compute, predict, evalute, repeat, automate ... .. 
+    console.log(task)
+    console.log(this.caleAI)
+    this.caleAI.CALEflow()
   }
 
   /**
