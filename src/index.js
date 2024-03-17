@@ -13,7 +13,7 @@ import util from 'util'
 import EventEmitter from 'events'
 import HopQuerybuider from 'hop-query-builder'
 import ContextHelp from './context/contextHelper.js'
-import CaleAI from 'cale-evolution'
+import HopLearn from 'hop-learn'
 
 class BbAI extends EventEmitter {
 
@@ -23,7 +23,7 @@ class BbAI extends EventEmitter {
     this.publicLibrary = {}
     this.nxtLibrary = xlibrary
     this.queryBuilder = new HopQuerybuider()
-    this.caleAI = {}
+    this.hopLearn = {}
     this.gatherAI()
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
@@ -44,7 +44,8 @@ class BbAI extends EventEmitter {
   *
   */
   gatherAI = function () {
-    this.caleAI = new CaleAI()
+    this.hopLearn = new HopLearn()
+    this.listenHopLearn()
   }
 
   /**
@@ -54,9 +55,27 @@ class BbAI extends EventEmitter {
   */
   coordinationAI = function (task) {
     // setup, data, compute, predict, evalute, repeat, automate ... .. 
-    console.log(task)
-    console.log(this.caleAI)
-    this.caleAI.CALEflow()
+    this.hopLearn.coordinateAI(task)
+  }
+
+  /**
+  * listen to HOP-Learn
+  * @method listenHopLearn
+  *
+  */
+  listenHopLearn = function () {
+    this.hopLearn.on('hop-learn', (data) => {
+      // let beebee check for other info to combine or send back to peer via HOP
+      let outFlow = {}
+      outFlow.type = data.context.type
+      outFlow.action = data.context.action
+      outFlow.task = data.context.task
+      outFlow.text = 'The model has completed training.  Run to update prediction.'
+      outFlow.query = false
+      outFlow.bbid = data.context.bbid
+      outFlow.data = data
+      this.emit('peer-bb-direct', outFlow)
+    })
   }
 
   /**
@@ -127,8 +146,7 @@ class BbAI extends EventEmitter {
         await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
       }
     }
-    console.log('bb cat bak')
-    console.log(bbResponseCategory.data)
+
     // need rules outFlow logic to order reponse and append data where relevant.
     let outFlow = {}
     outFlow.type = 'bbai'
@@ -166,8 +184,6 @@ class BbAI extends EventEmitter {
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
     } else if (bbResponseCategory.type === 'library') {
-      console.log('beebee-ai--this.nxtLibrary')
-      // console.log(this.nxtLibrary)
       bbResponseCategory.action = 'start'
       bbResponseCategory.text = bbResponseCategory.text
       bbResponseCategory.origin = 'beebee'

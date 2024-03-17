@@ -1,6 +1,6 @@
 {
   "name": "beebee-ai",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "BB toolkit helper AI",
   "main": "src/index.js",
   "type": "module",
@@ -18,6 +18,6 @@
   },
   "dependencies": {
     "hop-query-builder": "^0.0.11",
-    "cale-evolution": "^0.0.7"
+    "hop-learn": "^0.0.4"
   }
 }
