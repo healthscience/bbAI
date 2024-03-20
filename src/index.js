@@ -111,18 +111,17 @@ class BbAI extends EventEmitter {
   */
   nlpflow = async function (inFlow) {
     console.log('nplp')
-    console.log(inFlow)
+    // console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
     // does this flow free text only or includes file data?
     let bbResponseCategory = {}
     let blindFileName
     if (inFlow.data?.filedata) {
-      console.log('file data')
       // save the data to hyperdrive
       blindFileName = 'blindt' + inFlow.bbid
       // temp. prepare the data into an array for y axis and x time
-      let tempFilePrep = this.blindFiledataPrep(inFlow.data.content, inFlow.data.context)
+      let tempFilePrep = await this.blindFiledataPrep(inFlow.data.filedata, inFlow.data.content, inFlow.data.context)
       let fileAction = {}
       fileAction.probability = 1
       fileAction.type = 'hopquery'
@@ -275,17 +274,21 @@ class BbAI extends EventEmitter {
     return outFlow
   }
 
-
   /**
   *  temp hack to read csv file
   * @method 
   *
   */
-  blindFiledataPrep = function (message, context) {
+  blindFiledataPrep = async function (fileInfo, message, context) {
     // make parser structure
     let parseInfo = {}
-    parseInfo = { content: message, info: { cnumber: 0 }, context: context }
-    let parseData = this.nxtLibrary.liveHolepunch.DriveFiles.fileUtility.TEMPwebCSVparse(parseInfo)
+    parseInfo = { content: message, info: { cnumber: 0 }, context: context, file: fileInfo }
+    let parseData = {}
+    if (fileInfo.type === 'csv') {
+      parseData = this.nxtLibrary.liveHolepunch.DriveFiles.fileUtility.TEMPwebCSVparse(parseInfo)
+    } else if (fileInfo.type === 'sqlite') {
+      parseData = await this.nxtLibrary.liveHolepunch.DriveFiles.blindDataSqlite(parseInfo)
+    }
     let dataTimeseries = {}
     dataTimeseries.x = parseData.data // [6, 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, 6]
     dataTimeseries.y = parseData.label // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
