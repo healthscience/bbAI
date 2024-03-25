@@ -50,12 +50,23 @@ class BbAI extends EventEmitter {
 
   /**
   * coordinate between AI and SafeFlow or other ai's
+  * @method beginAgents
+  *
+  */
+  beginAgents = async function (task) {
+    console.log('beebee begin agents')
+    console.log(task)
+    await this.hopLearn.openOrchestra(task)
+  }
+
+  /**
+  * coordinate between AI and SafeFlow or other ai's
   * @method coordinationAI
   *
   */
-  coordinationAI = function (task) {
+  coordinationAgents = async function (message) {
     // setup, data, compute, predict, evalute, repeat, automate ... .. 
-    this.hopLearn.coordinateAI(task)
+    this.hopLearn.coordinateAgents(message)
   }
 
   /**
@@ -66,15 +77,21 @@ class BbAI extends EventEmitter {
   listenHopLearn = function () {
     this.hopLearn.on('hop-learn', (data) => {
       // let beebee check for other info to combine or send back to peer via HOP
-      let outFlow = {}
-      outFlow.type = data.context.type
-      outFlow.action = data.context.action
-      outFlow.task = data.context.task
-      outFlow.text = 'The model has completed training.  Run to update prediction.'
-      outFlow.query = false
-      outFlow.bbid = data.context.bbid
-      outFlow.data = data
-      this.emit('peer-bb-direct', outFlow)
+      if (data.action === 'cale-gpt4all') {
+        this.emit('peer-bb-direct', data)
+      } else if (data.action === 'cale-evolution' || data.context.task === 'cale-evolution') {
+        this.emit('peer-bb-direct', data)
+      } else if (data.context.task === '') {
+        let outFlow = {}
+        outFlow.type = data.context.type
+        outFlow.action = data.context.action
+        outFlow.task = data.context.task
+        outFlow.text = 'The model has completed training.  Run to update prediction.'
+        outFlow.query = false
+        outFlow.bbid = data.context.bbid
+        outFlow.data = data
+        this.emit('peer-bb-direct', outFlow)
+      }
     })
   }
 
@@ -136,7 +153,7 @@ class BbAI extends EventEmitter {
       await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
     } else {
       console.log('no file data')
-      // pass to LLM to see what it makes of the query
+      // pass to HOP-Learn / LLM to see what it makes of the query?
       bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
       // did the LLM provide numbers to chart, extract date information from questions etc.?
       // save to hyperdrive
