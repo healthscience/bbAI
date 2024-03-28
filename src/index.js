@@ -24,9 +24,10 @@ class BbAI extends EventEmitter {
     this.nxtLibrary = xlibrary
     this.queryBuilder = new HopQuerybuider()
     this.hopLearn = {}
-    this.gatherAI()
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
+    this.gatherAI()
+    this.listenAssessedResponse()
   }
 
   /**
@@ -46,6 +47,7 @@ class BbAI extends EventEmitter {
   gatherAI = function () {
     this.hopLearn = new HopLearn()
     this.listenHopLearn()
+    this.contextHelper.setHopLearn(this.hopLearn)
   }
 
   /**
@@ -54,8 +56,6 @@ class BbAI extends EventEmitter {
   *
   */
   beginAgents = async function (task) {
-    console.log('beebee begin agents')
-    console.log(task)
     await this.hopLearn.openOrchestra(task)
   }
 
@@ -79,9 +79,9 @@ class BbAI extends EventEmitter {
       // let beebee check for other info to combine or send back to peer via HOP
       if (data.action === 'cale-gpt4all') {
         this.emit('peer-bb-direct', data)
-      } else if (data.action === 'cale-evolution' || data.context.task === 'cale-evolution') {
+      } else if (data.action === 'cale-evolution' || data.context?.task === 'cale-evolution') {
         this.emit('peer-bb-direct', data)
-      } else if (data.context.task === '') {
+      } else if (data.context?.task === '') {
         let outFlow = {}
         outFlow.type = data.context.type
         outFlow.action = data.context.action
@@ -127,13 +127,11 @@ class BbAI extends EventEmitter {
   *
   */
   nlpflow = async function (inFlow) {
-    console.log('nplp')
-    // console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
     // does this flow free text only or includes file data?
-    let bbResponseCategory = {}
     let blindFileName
+    let bbResponseCategory = {}
     if (inFlow.data?.filedata) {
       // save the data to hyperdrive
       blindFileName = 'blindt' + inFlow.bbid
@@ -151,24 +149,54 @@ class BbAI extends EventEmitter {
       fileAction.data = summarydata
       bbResponseCategory = fileAction
       await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+      this.emit('assessed-response', bbResponseCategory, inFlow.bbid, blindFileName)
     } else {
-      console.log('no file data')
       // pass to HOP-Learn / LLM to see what it makes of the query?
-      bbResponseCategory = this.contextHelper.inputLanuage(this.peerQ)
+      await this.contextHelper.inputLanuage(this.peerQ, inFlow)
+    }
+  }
+
+  /**
+  * listen for assessed response
+  * @method listenAssessedResponse
+  *
+  */
+  listenAssessedResponse = async function () {
+    this.contextHelper.on('assessed-response', async (bbResponseCategory, bbox) => {
       // did the LLM provide numbers to chart, extract date information from questions etc.?
       // save to hyperdrive
-      if (bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library') {
-        blindFileName = 'blindt' + inFlow.bbid
+      let blindFileName
+      if (bbResponseCategory.type !== 'agent-response' && bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library') {
+        blindFileName = 'blindt' + bbox
         await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
       }
-    }
+      await this.outflowPrepare(bbResponseCategory, bbox, blindFileName)
+    })
+    // file upload
+    this.on('assessed-response', async (bbResponseCategory, bbox, blindFileName) => {
+      // did the LLM provide numbers to chart, extract date information from questions etc.?
+      await this.outflowPrepare(bbResponseCategory, bbox, blindFileName)
+    })
+  }
 
+  /**
+  * format ready for return 
+  * @method outflowPrepare
+  *
+  */
+  outflowPrepare = async function (bbResponseCategory, bbox, blindFileName) {
     // need rules outFlow logic to order reponse and append data where relevant.
     let outFlow = {}
     outFlow.type = 'bbai'
     outFlow.action = 'npl-reply'
+    outFlow.bbid = bbox
     if (bbResponseCategory.type === 'hello') {
       outFlow.type = 'hello'
+      outFlow.text = bbResponseCategory.text
+      outFlow.query = false
+      outFlow.data = bbResponseCategory.data
+    } else if (bbResponseCategory.type === 'agent-response') {
+      outFlow.type = 'agent-response'
       outFlow.text = bbResponseCategory.text
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
@@ -232,9 +260,8 @@ class BbAI extends EventEmitter {
       outFlow.query = false
       outFlow.data = 'sorry beebee cannot help.  beebee is still learning.'
     }
-    return outFlow
+    this.emit('beebee-response', outFlow)
   }
-
   /**
   * what can be learnt from language 
   * @method languageAgent
