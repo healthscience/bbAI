@@ -61,7 +61,7 @@ class ContextHelper extends EventEmitter {
       this.liveLLM.feedNLP(question, inFlow)
     } else { 
       // ask agents via HOP-Learn to suggest reply
-      this.responseLength[inFlow.input.bbid] = 2
+      this.responseLength[inFlow.bbid] = 2
       await this.hopLearn.coordinateAgents(inFlow)
       this.liveLLM.feedNLP(question, inFlow)
     }
