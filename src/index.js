@@ -14,6 +14,7 @@ import EventEmitter from 'events'
 import HopQuerybuider from 'hop-query-builder'
 import ContextHelp from './context/contextHelper.js'
 import HopLearn from 'hop-learn'
+import HopDML from 'hop-dml'
 
 class BbAI extends EventEmitter {
 
@@ -24,6 +25,7 @@ class BbAI extends EventEmitter {
     this.nxtLibrary = xlibrary
     this.queryBuilder = new HopQuerybuider()
     this.hopLearn = {}
+    this.hopDML = new HopDML(this.nxtLibrary)
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
     this.gatherAI()
@@ -48,6 +50,7 @@ class BbAI extends EventEmitter {
     this.hopLearn = new HopLearn()
     this.listenHopLearn()
     this.contextHelper.setHopLearn(this.hopLearn)
+    this.outflowEmbedding()
   }
 
   /**
@@ -68,6 +71,19 @@ class BbAI extends EventEmitter {
     // setup, data, compute, predict, evalute, repeat, automate ... .. 
     this.hopLearn.coordinateAgents(message)
   }
+
+
+  /**
+  * coordinate between AI and SafeFlow or other ai's
+  * @method coordinationDML
+  *
+  */
+  coordinationDML = async function (message) {
+    // prepare proof of work and message to network peer
+    console.log('pare Proof of work')
+    this.hopDML.powEvidence(message)
+  }
+  
 
   /**
   * listen to HOP-Learn
@@ -166,7 +182,7 @@ class BbAI extends EventEmitter {
       // did the LLM provide numbers to chart, extract date information from questions etc.?
       // save to hyperdrive
       let blindFileName
-      if (bbResponseCategory.type !== 'agent-response' && bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library') {
+      if (bbResponseCategory.type !== 'agent-response' && bbResponseCategory.type !== undefined && bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library' && bbResponseCategory.type !== 'library-open') {
         blindFileName = 'blindt' + bbox
         await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
       }
@@ -227,12 +243,16 @@ class BbAI extends EventEmitter {
       outFlow.text = bbResponseCategory.text
       outFlow.query = false
       outFlow.data = bbResponseCategory.data
-    } else if (bbResponseCategory.type === 'library') {
-      bbResponseCategory.action = 'start'
-      bbResponseCategory.text = bbResponseCategory.text
-      bbResponseCategory.origin = 'beebee'
+    } else if (bbResponseCategory.type === 'library' || bbResponseCategory.type === 'library-open') {
+      outFlow.type = 'library'
+      outFlow.text = bbResponseCategory.text
+      outFlow.query = false
+      outFlow.data = bbResponseCategory.data
+      // bbResponseCategory.action = 'start'
+      // bbResponseCategory.text = bbResponseCategory.text
+      // bbResponseCategory.origin = 'beebee'
       // use HQB for the library to build query and get data (leave 'higher' level for manage flows through HOP)
-      outFlow = await this.nxtLibrary.libManager.libraryManage(bbResponseCategory)
+      // outFlow = await this.nxtLibrary.libManager.libraryManage(bbResponseCategory)
     } else if (bbResponseCategory.type === 'upload') {
       outFlow.type = 'upload'
       outFlow.text = bbResponseCategory.text
@@ -262,6 +282,24 @@ class BbAI extends EventEmitter {
     }
     this.emit('beebee-response', outFlow)
   }
+
+  /**
+  * notify embedding complete 
+  * @method outflowEmbedding
+  *
+  */
+  outflowEmbedding = function () {
+    this.hopLearn.on('hop-learn-embedded', (data) => {
+      let outFlow = {}
+      outFlow.type = 'agent-response'
+      outFlow.text = 'Data has been embedded.'
+      outFlow.query = false
+      outFlow.data = data
+      this.emit('beebee-response', outFlow)
+    })
+
+  }
+
   /**
   * what can be learnt from language 
   * @method languageAgent
@@ -295,7 +333,7 @@ class BbAI extends EventEmitter {
   */
   managePrediction = function (message) {
     // what context set  free text or specific model
-    let languageContext = this.languageAgent(message.data.question)
+    // file assume dto deal with??????????let languageContext = this.languageAgent(message.data.question)
     // has a specific model been asked for
     let safeFlowQuery = {}
     if (message.data.model === 'linear-regression') {

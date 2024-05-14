@@ -11,9 +11,10 @@
 */
 import util from 'util'
 import EventEmitter from 'events'
-import LocalLLM from '../LLMapi/nlpManager.js'
+import LocalNLP from '../LLMapi/nlpManager.js'
 import LibraryMatcher from '../LLMapi/helpers/dateLanguage.js'
 import DateCalculator from '../LLMapi/helpers/dateCalculator.js'
+import { isAnyArrayBuffer } from 'util/types'
 
 class ContextHelper extends EventEmitter {
 
@@ -21,7 +22,7 @@ class ContextHelper extends EventEmitter {
     super()
     this.hopLearn = {}
     this.baseDate = ''
-    this.liveLLM = new LocalLLM()
+    this.liveNLP = new LocalNLP()
     this.dateCalc = new DateCalculator()
     this.libraryMatch = new LibraryMatcher()
     this.responseReply = {}
@@ -51,6 +52,8 @@ class ContextHelper extends EventEmitter {
     let firstWord = question.split(' ')[0]
     if (firstWord.toLowerCase() === 'chart') {
       chartCommand = true
+    } else if (firstWord.toLowerCase() === 'hello') {
+      chartCommand = true
     } else if (firstWord.toLowerCase() === 'upload') {
       chartCommand = true
     } else if (firstWord.toLowerCase() === 'library') {
@@ -58,12 +61,13 @@ class ContextHelper extends EventEmitter {
     }
     if (chartCommand === true) {
       this.responseLength[inFlow.bbid] = 1
-      this.liveLLM.feedNLP(question, inFlow)
+      this.liveNLP.feedNLP(question, inFlow)
     } else { 
       // ask agents via HOP-Learn to suggest reply
+      console.log(inFlow)
       this.responseLength[inFlow.bbid] = 2
       await this.hopLearn.coordinateAgents(inFlow)
-      this.liveLLM.feedNLP(question, inFlow)
+      this.liveNLP.feedNLP(question, inFlow)
     }
   }
 
@@ -87,7 +91,7 @@ class ContextHelper extends EventEmitter {
       } */
       this.assessResponses(data.input.bbid)
     })
-    this.liveLLM.on('hop-manager-response', (data) => {
+    this.liveNLP.on('hop-manager-response', (data) => {
       if (!this.responseHolder[data.input.bbid]) {
         this.responseHolder[data.input.bbid] = []
         this.responseHolder[data.input.bbid].push(data)
@@ -96,18 +100,19 @@ class ContextHelper extends EventEmitter {
       }
       this.assessResponses(data.input.bbid)
     })
+
   }
 
   /**
   * extract categories from input lanaguage flow
-  * @method inputLanuage
+  * @method assessResponses
   *
   */
   assessResponses = function (bbid) {
     let responseMade = {}
     if (this.responseLength[bbid] > 1) {
       let llmReply = false
-          // need to loop over and find pairs of same input
+      // need to loop over and find pairs of same input
       for (let input of this.responseHolder[bbid]) {
         llmReply = true
         // build keys
@@ -162,32 +167,32 @@ class ContextHelper extends EventEmitter {
       response.type = 'agent-response'
       response.text = answerLLM.data
       response.data = answerLLM
-  }  else if (answerLLM.context.score === 'hello') {
+  }  else if (answerLLM?.context?.score === 'hello') {
       response.probability = 1
       response.type = 'hello'
       response.text = 'hello how can beebee help?'
       response.data = 'hello how can beebee help?'
-    } else if (answerLLM.context.score === 'query') {
+    } else if (answerLLM?.context?.score === 'query') {
       response.probability = 1
       response.type = 'hopquery'
       response.text = 'How does this query look?'
       response.data = answerLLM
-    } else if (answerLLM.context.score === 'upload') {
+    } else if (answerLLM?.context?.score === 'upload') {
       response.probability = 1
       response.type = 'upload'
       response.text = 'Sorry, HOP has no data for that. Please upload or add url where beebee can find the data.'
       response.data = {}
-    } else if (answerLLM.context.score === 'library') {
+    } else if (answerLLM?.context?.score === 'library') {
       response.probability = 1
-      response.type = 'library'
-      response.text = 'Querying library for you.'
+      response.type = 'library-open'
+      response.text = 'Open library'
       response.data = {}
-    } else if (answerLLM.context.score === 'knowledge') {
+    } else if (answerLLM?.context?.score === 'knowledge') {
       response.probability = 1
       response.type = 'knowledge'
       response.text = 'Heart rate is a measure of the blood flow and ...'
       response.data = {}
-    } else if (answerLLM.context.score === 'help') {
+    } else if (answerLLM?.context?.score === 'help') {
       response.probability = 1
       response.type = 'help'
       response.text = 'The network library set governance over data standards of each bentoBoard.. .  . learn more'
@@ -195,8 +200,6 @@ class ContextHelper extends EventEmitter {
     } else {
       let response = 'nothing to say' // this.interpretate()
     }
-    console.log('responos afterere ')
-    console.log(response)
     return response
   }
 
