@@ -62,6 +62,16 @@ class BbAI extends EventEmitter {
     await this.hopLearn.openOrchestra(task)
   }
 
+
+  /**
+  * close an agent
+  * @method closeAgents
+  *
+  */
+  stopAgents = function (task) {
+    this.hopLearn.closeOrchestra(task)
+  }
+  
   /**
   * coordinate between AI and SafeFlow or other ai's
   * @method coordinationAI
@@ -94,6 +104,8 @@ class BbAI extends EventEmitter {
     this.hopLearn.on('hop-learn', (data) => {
       // let beebee check for other info to combine or send back to peer via HOP
       if (data.action === 'cale-gpt4all') {
+        this.emit('peer-bb-direct', data)
+      } else if (data.action === 'hop-learn-feedback') {
         this.emit('peer-bb-direct', data)
       } else if (data.action === 'cale-evolution' || data.context?.task === 'cale-evolution') {
         this.emit('peer-bb-direct', data)
@@ -165,6 +177,8 @@ class BbAI extends EventEmitter {
       fileAction.data = summarydata
       bbResponseCategory = fileAction
       await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+      console.log('Beebee--resonse')
+      console.log(bbResponseCategory)
       this.emit('assessed-response', bbResponseCategory, inFlow.bbid, blindFileName)
     } else {
       // pass to HOP-Learn / LLM to see what it makes of the query?
