@@ -24,6 +24,8 @@ class DataParse {
     let dataNumbers = this.parseStringToNumbers(input) // [2, 4, 6]
     // produce label data some array length if not provided
     let dataLabel = this.formLabel(dataNumbers)
+    console.log('data labels')
+    console.log(dataLabel)
     // success number extract?
     let numberSuccess = {}
     if (dataNumbers.length > 0) {

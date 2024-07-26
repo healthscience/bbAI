@@ -155,6 +155,8 @@ class BbAI extends EventEmitter {
   *
   */
   nlpflow = async function (inFlow) {
+    console.log('BB--nlpflow')
+    // console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
     // does this flow free text only or includes file data?
@@ -165,21 +167,31 @@ class BbAI extends EventEmitter {
       blindFileName = 'blindt' + inFlow.bbid
       // temp. prepare the data into an array for y axis and x time
       let tempFilePrep = await this.blindFiledataPrep(inFlow.data.filedata, inFlow.data.content, inFlow.data.context)
-      let fileAction = {}
-      fileAction.probability = 1
-      fileAction.type = 'hopquery'
-      fileAction.text = 'Please chart the data in the file'
-      let summarydata = {
-        context: { score: 'query', calendar: '' },
-        visstyle: [ 'line' ],
-        sequence: { status: true, data: tempFilePrep.x, label: tempFilePrep.y }
+      // if no data just inform of no data
+      if (tempFilePrep.x.length > 0) {
+        let fileAction = {}
+        fileAction.probability = 1
+        fileAction.type = 'hopquery'
+        fileAction.text = 'Please chart the data in the file'
+        let summarydata = {
+          context: { score: 'query', calendar: '' },
+          visstyle: [ 'line' ],
+          sequence: { status: true, data: tempFilePrep.x, label: tempFilePrep.y }
+        }
+        fileAction.data = summarydata
+        bbResponseCategory = fileAction
+        await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+        this.emit('assessed-response', bbResponseCategory, inFlow.bbid, blindFileName)
+      } else {
+        // no data return message to inform
+        let outFlow = {}
+        outFlow.type = 'query-no-data'
+        outFlow.action = ''
+        outFlow.text = 'a peer has send chart data'
+        outFlow.query = false
+        outFlow.bbid = inFlow.bbid
+        this.emit('beebee-response', outFlow)
       }
-      fileAction.data = summarydata
-      bbResponseCategory = fileAction
-      await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
-      console.log('Beebee--resonse')
-      console.log(bbResponseCategory)
-      this.emit('assessed-response', bbResponseCategory, inFlow.bbid, blindFileName)
     } else {
       // pass to HOP-Learn / LLM to see what it makes of the query?
       await this.contextHelper.inputLanuage(this.peerQ, inFlow)
@@ -216,6 +228,7 @@ class BbAI extends EventEmitter {
   */
   outflowPrepare = async function (bbResponseCategory, bbox, blindFileName) {
     // need rules outFlow logic to order reponse and append data where relevant.
+    console.log('bb--prepareoutFLow---')
     let outFlow = {}
     outFlow.type = 'bbai'
     outFlow.action = 'npl-reply'
@@ -372,7 +385,7 @@ class BbAI extends EventEmitter {
 
   /**
   *  temp hack to read csv file
-  * @method 
+  * @method blindFiledataPrep
   *
   */
   blindFiledataPrep = async function (fileInfo, message, context) {
@@ -382,6 +395,8 @@ class BbAI extends EventEmitter {
     let parseData = {}
     if (fileInfo.type === 'csv') {
       parseData = this.nxtLibrary.liveHolepunch.DriveFiles.fileUtility.TEMPwebCSVparse(parseInfo)
+    } else if (fileInfo.type === 'json') {
+      parseData = await this.nxtLibrary.liveHolepunch.DriveFiles.fileUtility.TEMPwebJSONparse(parseInfo)
     } else if (fileInfo.type === 'sqlite') {
       parseData = await this.nxtLibrary.liveHolepunch.DriveFiles.blindDataSqlite(parseInfo)
     }
@@ -392,4 +407,5 @@ class BbAI extends EventEmitter {
   }
 
 }
+
 export default BbAI
