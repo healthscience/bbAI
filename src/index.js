@@ -1,17 +1,18 @@
 'use strict'
 /**
-*  beebee Help Interface to BentoBox - AI
+*  beebee orchestration agent
 *
 *
 * @class BbAI
 * @package    bbAI-interface
-* @copyright  Copyright (c) 2022 James Littlejohn
+* @copyright  Copyright (c) 2024 James Littlejohn
 * @license    http://www.gnu.org/licenses/old-licenses/gpl-3.0.html
 * @version    $Id$
 */
 import util from 'util'
 import EventEmitter from 'events'
 import HopQuerybuider from 'hop-query-builder'
+import BeSearch from './besearch/index.js'
 import ContextHelp from './context/contextHelper.js'
 import HopLearn from 'hop-learn'
 import HopDML from 'hop-dml'
@@ -20,16 +21,18 @@ class BbAI extends EventEmitter {
 
   constructor(xlibrary) {
     super()
-    this.hello = 'bb-AI--{{hello}}'
+    this.hello = 'beebee-AI--{{hello}}'
     this.publicLibrary = {}
     this.nxtLibrary = xlibrary
     this.queryBuilder = new HopQuerybuider()
+    this.beSearch = new BeSearch()
     this.hopLearn = {}
     this.hopDML = new HopDML(this.nxtLibrary)
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
     this.gatherAI()
     this.listenAssessedResponse()
+    this.listenOracle()
   }
 
   /**
@@ -39,6 +42,8 @@ class BbAI extends EventEmitter {
   */
   listenHolepunchLive = async function () {
     this.publicLibrary = await this.libraryRefContracts()
+    // ask the oracle if anything to bring to attention
+    await this.beSearch.listenOracles()
   }
 
   /**
@@ -93,7 +98,6 @@ class BbAI extends EventEmitter {
     console.log('pare Proof of work')
     this.hopDML.powEvidence(message)
   }
-  
 
   /**
   * listen to HOP-Learn
@@ -155,13 +159,19 @@ class BbAI extends EventEmitter {
   *
   */
   nlpflow = async function (inFlow) {
-    console.log('BB--nlpflow')
+    console.log('BeeBee--nlpflow')
     // console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
     // does this flow free text only or includes file data?
     let blindFileName
     let bbResponseCategory = {}
+    // large file data or data included along?
+    if (inFlow.data?.filedata?.size === 'large') {
+
+    } else {
+
+    }
     if (inFlow.data?.filedata) {
       // save the data to hyperdrive
       blindFileName = 'blindt' + inFlow.bbid
@@ -218,6 +228,22 @@ class BbAI extends EventEmitter {
     this.on('assessed-response', async (bbResponseCategory, bbox, blindFileName) => {
       // did the LLM provide numbers to chart, extract date information from questions etc.?
       await this.outflowPrepare(bbResponseCategory, bbox, blindFileName)
+    })
+  }
+
+  /**
+  * oracle events to listen for
+  * @method listenOracle
+  *
+  */
+  listenOracle = async function () {
+    this.beSearch.on('oracle', async (oracleData) => {
+      let outFlow = {}
+      outFlow.type = 'oracle'
+      outFlow.action = 'oracle-attention'
+      outFlow.bbid = ''
+      outFlow.data = oracleData
+      this.emit('beebee-response', outFlow)
     })
   }
 
