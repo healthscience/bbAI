@@ -154,6 +154,25 @@ class BbAI extends EventEmitter {
   }
 
   /**
+  * message to space share
+  * @method networkPeerSpace
+  *
+  */
+  networkPeerSpace = function (data) {
+    console.log('beebee function listen cue space')
+    console.log(data)
+    let outFlow = {}
+    outFlow.type = 'network-notification'
+    outFlow.action = 'cue-space'
+    outFlow.text = 'a peer has shared a cue space'
+    outFlow.query = false
+    outFlow.bbid = 'cue-space' // data.hop.bbid
+    outFlow.data = data
+    console.log('message out cue space replication')
+    this.emit('peer-bb-direct', outFlow)
+  }
+
+  /**
   * NLP conversation
   * @method nlpflow
   *
