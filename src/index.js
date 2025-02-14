@@ -149,7 +149,8 @@ class BbAI extends EventEmitter {
     outFlow.action = 'chart'
     outFlow.text = 'a peer has send chart data'
     outFlow.query = false
-    outFlow.bbid = data.hop.bbid
+    // outFlow.bbid = data.hop.bbid
+    outFlow.data = data
     this.emit('peer-bb-direct', outFlow)
   }
 
@@ -273,7 +274,6 @@ class BbAI extends EventEmitter {
   */
   outflowPrepare = async function (bbResponseCategory, bbox, blindFileName) {
     // need rules outFlow logic to order reponse and append data where relevant.
-    console.log('bb--prepareoutFLow---')
     let outFlow = {}
     outFlow.type = 'bbai'
     outFlow.action = 'npl-reply'
