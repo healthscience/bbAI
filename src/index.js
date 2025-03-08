@@ -64,7 +64,7 @@ class BbAI extends EventEmitter {
   *
   */
   beginAgents = async function (task) {
-    await this.hopLearn.openOrchestra(task)
+    await this.hopLearn.openAgent(task)
   }
 
 
@@ -125,6 +125,18 @@ class BbAI extends EventEmitter {
         this.emit('peer-bb-direct', outFlow)
       }
     })
+
+    this.hopLearn.on('hop-learn-models', (data) => {
+      let outFlow = {}
+      outFlow.type = data.type
+      outFlow.action = data.action
+      outFlow.task = data.task
+      outFlow.text = 'The LLM models avaiable'
+      outFlow.query = false
+      outFlow.bbid = ''
+      outFlow.data = data.data
+      this.emit('peer-bb-models', outFlow)
+    })
   }
 
   /**
@@ -180,6 +192,7 @@ class BbAI extends EventEmitter {
   */
   nlpflow = async function (inFlow) {
     console.log('BeeBee--nlpflow')
+    console.log(inFlow)
     // console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO

@@ -14,7 +14,6 @@ import EventEmitter from 'events'
 import LocalNLP from '../LLMapi/nlpManager.js'
 import LibraryMatcher from '../LLMapi/helpers/dateLanguage.js'
 import DateCalculator from '../LLMapi/helpers/dateCalculator.js'
-import { isAnyArrayBuffer } from 'util/types'
 
 class ContextHelper extends EventEmitter {
 
@@ -47,6 +46,8 @@ class ContextHelper extends EventEmitter {
   *
   */
   inputLanuage = async function (question, inFlow) {
+    console.log('inputlange beebee')
+    console.log(question)
     let chartCommand = false
     // if chart, upload, library  key words then limit NPL
     let firstWord = question.split(' ')[0]
