@@ -46,8 +46,6 @@ class ContextHelper extends EventEmitter {
   *
   */
   inputLanuage = async function (question, inFlow) {
-    console.log('inputlange beebee')
-    console.log(question)
     let chartCommand = false
     // if chart, upload, library  key words then limit NPL
     let firstWord = question.split(' ')[0]
@@ -65,7 +63,6 @@ class ContextHelper extends EventEmitter {
       this.liveNLP.feedNLP(question, inFlow)
     } else { 
       // ask agents via HOP-Learn to suggest reply
-      console.log(inFlow)
       this.responseLength[inFlow.bbid] = 2
       await this.hopLearn.coordinateAgents(inFlow)
       this.liveNLP.feedNLP(question, inFlow)

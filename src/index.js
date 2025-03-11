@@ -172,8 +172,6 @@ class BbAI extends EventEmitter {
   *
   */
   networkPeerSpace = function (data) {
-    console.log('beebee function listen cue space')
-    console.log(data)
     let outFlow = {}
     outFlow.type = 'network-notification'
     outFlow.action = 'cue-space'
@@ -181,7 +179,6 @@ class BbAI extends EventEmitter {
     outFlow.query = false
     outFlow.bbid = 'cue-space' // data.hop.bbid
     outFlow.data = data
-    console.log('message out cue space replication')
     this.emit('peer-bb-direct', outFlow)
   }
 
@@ -191,9 +188,6 @@ class BbAI extends EventEmitter {
   *
   */
   nlpflow = async function (inFlow) {
-    console.log('BeeBee--nlpflow')
-    console.log(inFlow)
-    // console.log(inFlow)
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
     // does this flow free text only or includes file data?
