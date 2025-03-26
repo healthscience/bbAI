@@ -159,7 +159,7 @@ class BbAI extends EventEmitter {
     let outFlow = {}
     outFlow.type = 'network-notification'
     outFlow.action = 'chart'
-    outFlow.text = 'a peer has send chart data'
+    outFlow.text = 'a peer has sent chart data'
     outFlow.query = false
     // outFlow.bbid = data.hop.bbid
     outFlow.data = data
