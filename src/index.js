@@ -251,7 +251,7 @@ class BbAI extends EventEmitter {
         blindFileName = 'blindt' + bbox
         console.log('asseste library')
         // console.log(this.nxtLibrary)
-        await this.nxtLibrary.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+        await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
       }
       await this.outflowPrepare(bbResponseCategory, bbox, blindFileName)
     })
