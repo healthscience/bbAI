@@ -213,12 +213,11 @@ class BbAI extends EventEmitter {
         let summarydata = {
           context: { score: 'query', calendar: '' },
           visstyle: [ 'line' ],
-          sequence: { status: true, data: tempFilePrep.x, label: tempFilePrep.y }
+          sequence: { status: true, data: tempFilePrep.x, label: tempFilePrep.y },
+          input: { data: { compute: 'observation'} }
         }
         fileAction.data = summarydata
         bbResponseCategory = fileAction
-        console.log('hyper drive active')
-        console.log(this.nxtLibrary)
         await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
         this.emit('assessed-response', bbResponseCategory, inFlow.bbid, blindFileName)
       } else {
@@ -249,8 +248,6 @@ class BbAI extends EventEmitter {
       let blindFileName
       if (bbResponseCategory.type !== 'agent-response' && bbResponseCategory.type !== undefined && bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library' && bbResponseCategory.type !== 'library-open') {
         blindFileName = 'blindt' + bbox
-        console.log('asseste library')
-        // console.log(this.nxtLibrary)
         await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
       }
       await this.outflowPrepare(bbResponseCategory, bbox, blindFileName)
