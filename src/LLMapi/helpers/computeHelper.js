@@ -41,12 +41,12 @@ class ComputeHelper extends EventEmitter {
       let matchVword = words.filter(e => e === stat)
 
       if (matchVword.length > 0) {
-        matchVwords.push({ compute: stat, match: true })
+        matchVwords.push({ compute: stat +'-statistics', match: true })
       }
     }
     // if no match make bar  default
     if (matchVwords.length === 0) {
-      matchVwords.push({ stat: 'observation', match: true })
+      matchVwords.push({ compute: 'observation', match: true })
     }
     return matchVwords
   }
