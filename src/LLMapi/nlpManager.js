@@ -14,12 +14,14 @@ import EventEmitter from 'events'
 import DataParse from './dataExtract/dataParse.js'
 import SequenceBuilder from './dataExtract/sequencyBuilder.js'
 import CalendarHelper from './helpers/calendarHelper.js'
+import StatsBuilder from './helpers/computeHelper.js'
 import VisBuilder from './helpers/visHelper.js'
 
 class LlmManger extends EventEmitter {
 
   constructor() {
     super()
+    this.statContext = new StatsBuilder()
     this.visContext = new VisBuilder()
     this.calendarContext = new CalendarHelper()
     this.dataParser = new DataParse()
@@ -44,6 +46,8 @@ class LlmManger extends EventEmitter {
     let words = text.toLowerCase().split(" ")
     // which category of question?
     let categoriseInput = this.extractContext(words)
+    // any statstics terminology?
+    let statisticsType = this.statContext.matchComputeStatistics(words)
     // type of chart or visualisation?
     let visStyle = this.visContext.matchStyle(words)
     // example of number sequences
@@ -59,6 +63,7 @@ class LlmManger extends EventEmitter {
     let LLMcontext = {}
     LLMcontext.input = inFlow
     LLMcontext.context = categoriseInput
+    LLMcontext.compute = statisticsType
     LLMcontext.visstyle = visStyle
     LLMcontext.sequence = initialDataExtract
     this.emit('hop-manager-response', LLMcontext)

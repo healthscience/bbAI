@@ -1,18 +1,18 @@
 'use strict'
 /**
-*  extract vis style 
+*  extract compute statistic from text
 *
 *
-* @class VisHelper
-* @package    visualise-helper
-* @copyright  Copyright (c) 2023 James Littlejohn
+* @class ComputeHelper
+* @package    compute-helper
+* @copyright  Copyright (c) 2025 James Littlejohn
 * @license    http://www.gnu.org/licenses/old-licenses/gpl-3.0.html
 * @version    $Id$
 */
 import util from 'util'
 import EventEmitter from 'events'
 
-class VisHelper extends EventEmitter {
+class ComputeHelper extends EventEmitter {
 
   constructor() {
     super()
@@ -32,25 +32,25 @@ class VisHelper extends EventEmitter {
   * @method matchStyle
   *
   */
-  matchStyle = function (words) {
-    let libraryVis = ['bar', 'line'] // this.liveLibraryVisRefs()
+  matchComputeStatistics = function (words) {
+    let libraryStats = ['observation', 'average', 'sum'] // this.liveLibraryVisRefs()
     // take text words and match to library descriptions
     let matchVwords = []
-    for (let vis of libraryVis) {
+    for (let stat of libraryStats) {
       // does the question contain vis  word?
-      let matchVword = words.filter(e => e === vis)
+      let matchVword = words.filter(e => e === stat)
 
       if (matchVword.length > 0) {
-        matchVwords.push({ vis: vis, match: true })
+        matchVwords.push({ compute: stat, match: true })
       }
     }
     // if no match make bar  default
     if (matchVwords.length === 0) {
-      matchVwords.push({ vis: 'bar', match: true })
+      matchVwords.push({ stat: 'observation', match: true })
     }
     return matchVwords
   }
 
 }
 
-export default VisHelper
+export default ComputeHelper
