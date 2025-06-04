@@ -310,12 +310,10 @@ class BbAI extends EventEmitter {
         // first check public library is present if not ask for it again
         let setAlready = Object.keys(this.publicLibrary)
         if (setAlready.length === 0) {
-          console.log('beebee-ai blind query need ing library first')
           await this.listenHolepunchLive()
           let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
           outFlow.data = safeFlowQuery
         } else {
-          console.log('beebee-ai  library contract alread avaiable')
           let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
           outFlow.data = safeFlowQuery
         }
