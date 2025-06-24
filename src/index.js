@@ -442,6 +442,10 @@ class BbAI extends EventEmitter {
   *
   */
   blindFiledataPrep = async function (fileInfo, message, context) {
+    console.log('blind data prep')
+    console.log(fileInfo)
+    console.log(message)
+    console.log(context)
     // make parser structure
     let parseInfo = {}
     parseInfo = { content: message, info: { cnumber: 0 }, context: context, file: fileInfo }
