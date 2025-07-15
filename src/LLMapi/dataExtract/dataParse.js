@@ -9,6 +9,7 @@
 * @license    http://www.gnu.org/licenses/old-licenses/gpl-3.0.html
 * @version    $Id$
 */
+import { DateTime } from 'luxon'
 
 class DataParse {
 
@@ -60,10 +61,15 @@ class DataParse {
   *
   */
   formLabel = function (numArr) {
+    console.log('form labels should be time fomat')
+    console.log(numArr)
     let label = []
     let count = 1
     for (let item of numArr) {
-      label.push(count.toString())
+      let newDate = DateTime.now().plus({ days: item }) // .toFormat('yyyy-MM-dd')
+      console.log(newDate)
+      const timestamp = newDate.toMillis()
+      label.push(timestamp)
       count++
     }
     return label
