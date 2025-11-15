@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "mocha test/*.*"
+    "test": "vitest"
   },
   "repository": {
     "type": "git",
@@ -14,9 +14,13 @@
   "author": "aboynejames@gmail.com",
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "beebee-agent": "^0.1.0",
     "hop-dml": "^0.0.2",
     "hop-learn": "^0.1.0",
     "hop-query-builder": "^0.2.4",
     "luxon": "^3.4.4"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.9"
   }
 }

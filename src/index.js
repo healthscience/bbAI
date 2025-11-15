@@ -11,6 +11,7 @@
 */
 import util from 'util'
 import EventEmitter from 'events'
+import BeebeeAgent from './beebeeAgent/beebeeLearn.js'
 import HopQuerybuider from 'hop-query-builder'
 import BeSearch from './besearch/index.js'
 import ContextHelp from './context/contextHelper.js'
@@ -24,6 +25,7 @@ class BbAI extends EventEmitter {
     this.hello = 'beebee-AI--{{hello}}'
     this.publicLibrary = {}
     this.nxtLibrary = xlibrary
+    this.beebeeAgent = new BeebeeAgent();
     this.queryBuilder = new HopQuerybuider()
     this.beSearch = new BeSearch()
     this.hopLearn = {}
@@ -462,6 +464,40 @@ class BbAI extends EventEmitter {
     dataTimeseries.y = parseData.label // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
     return dataTimeseries
   }
+
+  /**
+  *  bring TINY LLM to be
+  * @method startBeeBee
+  *
+  */
+  startBeeBee = async function () {
+    await this.beebeeAgent.initialize();
+    console.log('after initialization')
+  }
+
+  /**
+  *  call beebee tiny llm
+  * @method beebeeMain
+  *
+  */
+  beebeeMain = async function (promptIN) {
+    // Simulate receiving messages from BentoBoxDS
+    console.log('prompt beebee');
+    await this.beebeeAgent.handleBentoBoxMessage({
+      type: 'prompt_stream',
+      prompt: promptIN
+    });
+    
+    // console.log("\n--- Simulating BentoBoxDS streaming prompt ---");
+    /* await beebeeAgent.handleBentoBoxMessage({
+      type: 'prompt_stream',
+      prompt: 'Tell me about HealthCues'
+    });  */
+    
+    // Clean up
+    await this.beebeeAgent.dispose();
+  }
+
 
 }
 
