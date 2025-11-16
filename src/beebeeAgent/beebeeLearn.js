@@ -10,7 +10,6 @@ class BeeBeeAgent extends EventEmitter {
   }
   
   async initialize() {
-    console.log('learn intiitittiti')
     // Create BeeBee instance with BentoBoxDS system prompt
     this.beebee = await createBeeBee({
       temperature: 0.7,
@@ -19,7 +18,6 @@ class BeeBeeAgent extends EventEmitter {
     
     // Set up event listeners
     this.beebee.on('ready', () => {
-      console.log('✅ BeeBee LLM ready');
       this.broadcastToClients({ type: 'llm_ready' });
     });
     
@@ -70,7 +68,6 @@ class BeeBeeAgent extends EventEmitter {
   
   // Simulate broadcasting to websocket clients
   broadcastToClients(message) {
-    console.log('📡 Broadcasting to BentoBoxDS:', message);
     this.emit('beebee-agent-reply', message)
     // In real implementation, this would send via websocket
     // this.websocketClients.forEach(client => {

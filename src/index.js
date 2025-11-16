@@ -472,7 +472,6 @@ class BbAI extends EventEmitter {
   */
   startBeeBee = async function () {
     await this.beebeeAgent.initialize();
-    console.log('after initialization')
   }
 
   /**
@@ -481,8 +480,7 @@ class BbAI extends EventEmitter {
   *
   */
   beebeeMain = async function (promptIN) {
-    // Simulate receiving messages from BentoBoxDS
-    console.log('prompt beebee');
+    // Simulate receiving messages from BentoBoxD
     await this.beebeeAgent.handleBentoBoxMessage({
       type: 'prompt_stream',
       prompt: promptIN

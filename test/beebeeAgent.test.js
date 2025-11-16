@@ -22,9 +22,6 @@ beforeEach(async () => {
     // Create a promise to wait for the event
     const eventPromise = new Promise((resolve) => {
       bbAI.beebeeAgent.on('beebee-agent-reply', (data) => {
-        console.log('beebee reply');
-        console.log(data);
-
         // Add assertions here to verify the behavior of the beebeeMain function
         expect(data).toBeDefined();
         if (data.type !== 'response_complete') {
@@ -37,7 +34,6 @@ beforeEach(async () => {
       });
     });
     await bbAI.startBeeBee()
-    console.log('over start')
     // Call the beebeeMain function
     let prompt = "How to live a healthy life in 100 words please?";
     await bbAI.beebeeMain(prompt);
