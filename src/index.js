@@ -33,6 +33,7 @@ class BbAI extends EventEmitter {
     this.peerQ = ''
     this.contextHelper = new ContextHelp()
     this.gatherAI()
+    this.listenBeeBeeAgent()
     this.listenAssessedResponse()
     this.listenOracle()
   }
@@ -69,7 +70,6 @@ class BbAI extends EventEmitter {
     await this.hopLearn.openAgent(task)
   }
 
-
   /**
   * close an agent
   * @method closeAgents
@@ -99,6 +99,23 @@ class BbAI extends EventEmitter {
     // prepare proof of work and message to network peer
     console.log('pare Proof of work')
     this.hopDML.powEvidence(message)
+  }
+
+  /**
+  * listen to beebee agent
+  * @method listenBeeBeeAgent
+  *
+  */
+  listenBeeBeeAgent = function () {
+    this.beebeeAgent.on('beebee-agent-reply', (data) => {
+      if (data.type === 'response_complete') {
+        // inform bentobox of complete reply and save in chat history via BentoBoxDS
+        
+      } else if (data.type === 'token') {
+        // pass on words back so can by displayed on BentoBoxDS chat stream
+        this.emit('beebee-response-stream', data)
+      }
+    })
   }
 
   /**
@@ -185,13 +202,18 @@ class BbAI extends EventEmitter {
   }
 
   /**
-  * NLP conversation
+  * NLP conversation with beebee who will then coordinate with other tiny agents to give best response back to peer via BentoBoxDS
   * @method nlpflow
   *
   */
-  nlpflow = async function (inFlow) {
+  beebeeFlow = async function (inFlow) {
     this.peerQ = inFlow.data.text
     // pass to validtor FIRST TODO
+    
+    // give beeebee tiny agent first go at query.
+    await this.beebeeMain(this.peerQ, inFlow.bbid)
+
+    // look if tools were used e.g. file upload or api to email or call other agent tools?
     // does this flow free text only or includes file data?
     let blindFileName
     let bbResponseCategory = {}
@@ -479,23 +501,16 @@ class BbAI extends EventEmitter {
   * @method beebeeMain
   *
   */
-  beebeeMain = async function (promptIN) {
+  beebeeMain = async function (promptIN, bboxID) {
     // Simulate receiving messages from BentoBoxD
     await this.beebeeAgent.handleBentoBoxMessage({
       type: 'prompt_stream',
       prompt: promptIN
-    });
-    
-    // console.log("\n--- Simulating BentoBoxDS streaming prompt ---");
-    /* await beebeeAgent.handleBentoBoxMessage({
-      type: 'prompt_stream',
-      prompt: 'Tell me about HealthCues'
-    });  */
+    }, bboxID);
     
     // Clean up
     await this.beebeeAgent.dispose();
   }
-
 
 }
 

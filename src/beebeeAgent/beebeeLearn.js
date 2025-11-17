@@ -21,11 +21,12 @@ class BeeBeeAgent extends EventEmitter {
       this.broadcastToClients({ type: 'llm_ready' });
     });
     
-    this.beebee.on('token', (token) => {
+    this.beebee.on('token', (token, receivedBboxID) => {
       // Stream tokens to BentoBoxDS clients
       this.broadcastToClients({
         type: 'token',
-        data: token
+        data: token,
+        bboxid: receivedBboxID
       });
     });
     
@@ -47,18 +48,26 @@ class BeeBeeAgent extends EventEmitter {
   }
   
   // Called when receiving message from BentoBoxDS
-  async handleBentoBoxMessage(message) {
+  async handleBentoBoxMessage(message, bboxID) {
     const { type, prompt, options = {} } = message;
-    
+
+    let fullResponse = '';
+    const tokensWithBboxID = [];
+
+    const onToken = (token, tokenBboxID) => {
+      fullResponse += token;
+      tokensWithBboxID.push({ token, bboxid: tokenBboxID });
+    };
+  
     switch (type) {
       case 'prompt':
         // Non-streaming prompt
-        await this.beebee.prompt(prompt, options);
+        await this.beebee.prompt(prompt, options, bboxID);
         break;
         
       case 'prompt_stream':
         // Streaming prompt
-        await this.beebee.promptStream(prompt, options);
+        await this.beebee.promptStream(prompt, options, onToken, bboxID);
         break;
         
       default:
@@ -69,10 +78,6 @@ class BeeBeeAgent extends EventEmitter {
   // Simulate broadcasting to websocket clients
   broadcastToClients(message) {
     this.emit('beebee-agent-reply', message)
-    // In real implementation, this would send via websocket
-    // this.websocketClients.forEach(client => {
-    //   client.send(JSON.stringify(message));
-    // });
   }
   
   async dispose() {

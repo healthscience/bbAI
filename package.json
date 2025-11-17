@@ -1,6 +1,6 @@
 {
   "name": "beebee-ai",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "description": "BB toolkit helper AI",
   "main": "src/index.js",
   "type": "module",
@@ -14,7 +14,7 @@
   "author": "aboynejames@gmail.com",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "beebee-agent": "^0.1.1",
+    "beebee-agent": "^0.1.3",
     "hop-dml": "^0.0.2",
     "hop-learn": "^0.1.0",
     "hop-query-builder": "^0.2.4",
