@@ -17,6 +17,7 @@ import BeSearch from './besearch/index.js'
 import ContextHelp from './context/contextHelper.js'
 import HopLearn from 'hop-learn'
 import HopDML from 'hop-dml'
+import { isAnyArrayBuffer } from 'util/types'
 
 class BbAI extends EventEmitter {
 
@@ -207,57 +208,74 @@ class BbAI extends EventEmitter {
   *
   */
   beebeeFlow = async function (inFlow) {
-    this.peerQ = inFlow.data.text
-    // pass to validtor FIRST TODO
-    
-    // give beeebee tiny agent first go at query.
-    await this.beebeeMain(this.peerQ, inFlow.bbid)
-
-    // look if tools were used e.g. file upload or api to email or call other agent tools?
-    // does this flow free text only or includes file data?
-    let blindFileName
-    let bbResponseCategory = {}
-    // large file data or data included along?
-    if (inFlow.data?.filedata?.size === 'large') {
-
-    } else {
-
+    console.log('beebeeFLOW')
+    console.log(inFlow)
+    // take quick look with beebee own bentoboxDS NLP skills
+    // pass to HOP-Learn / LLM to see what it makes of the query?
+    let firstReview = await this.contextHelper.inputLanuage(inFlow.data.data.text, inFlow)
+    console.log('quick context gather and plan action')
+    console.log(firstReview)
+    // beebee has to decide on best info gathering paths.
+    // check for tools use
+    let toolUse = false
+    if (inFlow.data.data.tools.length > 0) {
+      console.log('yes tools')
+      toolUse = true
     }
-    if (inFlow.data?.filedata) {
-      // save the data to hyperdrive
-      blindFileName = 'blindt' + inFlow.bbid
-      // temp. prepare the data into an array for y axis and x time
-      let tempFilePrep = await this.blindFiledataPrep(inFlow.data.filedata, inFlow.data.content, inFlow.data.context)
-      // if no data just inform of no data
-      if (tempFilePrep.x.length > 0) {
-        let fileAction = {}
-        fileAction.probability = 1
-        fileAction.type = 'hopquery'
-        fileAction.text = 'Please chart the data in the file'
-        let summarydata = {
-          context: { score: 'query', calendar: '' },
-          visstyle: [ 'line' ],
-          sequence: { status: true, data: tempFilePrep.x, label: tempFilePrep.y },
-          input: { data: { compute: 'observation'} }
+    // start action based on tool
+    let uploadTools = false
+    if (toolUse === true) {
+      for (let tool of inFlow.data.data.tools ) {
+        console.log('call funciton relevant per tool')
+        if (tool === 'upload') {
+          uploadTools = true
         }
-        fileAction.data = summarydata
-        bbResponseCategory = fileAction
-        await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
-        this.emit('assessed-response', bbResponseCategory, inFlow.bbid, blindFileName)
-      } else {
-        // no data return message to inform
-        let outFlow = {}
-        outFlow.type = 'query-no-data'
-        outFlow.action = ''
-        outFlow.text = 'a peer has send chart data'
-        outFlow.query = false
-        outFlow.bbid = inFlow.bbid
-        this.emit('beebee-response', outFlow)
       }
-    } else {
-      // pass to HOP-Learn / LLM to see what it makes of the query?
-      await this.contextHelper.inputLanuage(this.peerQ, inFlow)
+
     }
+
+    // hand data uploads
+    if (uploadTools ===  true) {
+      // look if tools were used e.g. file upload or api to email or call other agent tools?
+       this.fileDataFlow(inFlow.data, inFlow.bbid)
+    }
+
+    // pull together all parts and ask beebeee to build response
+    // build prompt for beebee
+    let beebeePrompt = {}
+    beebeePrompt.rawinput = inFlow.data.data.text
+    if (firstReview.bentobox === true) {
+      beebeePrompt.mode = 'hopquery'
+      beebeePrompt.task = 'a HOPquery has been prepared for data in query'
+    }
+    // upload
+    if (uploadTools === true) {
+      beebeePrompt.upload = 'Thank you for the file data'
+    }
+    // action reply
+    beebeePrompt.reply = 'Please produce a short reply to keep the peer inform'
+    // serialize object for LLM
+    let serializePrompt = this.serializeJSobject(beebeePrompt)
+    console.log(serializePrompt)
+    // give beeebee the context to reply to
+    await this.beebeeMain(serializePrompt, inFlow.bbid)
+    // beebee will emit response
+    
+  }
+
+
+  /**
+  *
+  * @method  serializeJSobject
+  */
+  serializeJSobject = function (obj) {
+    let result = '';
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        result += `${key}=${encodeURIComponent(obj[key])}&`;
+      }
+    }
+    return result.slice(0, -1);
   }
 
   /**
@@ -461,6 +479,59 @@ class BbAI extends EventEmitter {
   }
 
   /**
+   * hand file uploads  small and large
+   * 
+  */
+  fileDataFlow = async function (fileInfo, bbid) {
+    console.log('file data flows=======')
+    console.log(fileInfo)
+    console.log(bbid) 
+    // does this flow free text only or includes file data?
+      let blindFileName
+      let bbResponseCategory = {}
+      // large file data or data included along?
+      if (fileInfo.filedata?.size === 'large') {
+
+      } else {
+
+      }
+      if (inFlow.data?.filedata) {
+        // save the data to hyperdrive
+        blindFileName = 'blindt' + inFlow.bbid
+        // temp. prepare the data into an array for y axis and x time
+        let tempFilePrep = await this.blindFiledataPrep(fileInfo.filedata, fileInfo.content, fileInfo.context)
+        // if no data just inform of no data
+        if (tempFilePrep.x.length > 0) {
+          let fileAction = {}
+          fileAction.probability = 1
+          fileAction.type = 'hopquery'
+          fileAction.text = 'Please chart the data in the file'
+          let summarydata = {
+            context: { score: 'query', calendar: '' },
+            visstyle: [ 'line' ],
+            sequence: { status: true, data: tempFilePrep.x, label: tempFilePrep.y },
+            input: { data: { compute: 'observation'} }
+          }
+          fileAction.data = summarydata
+          bbResponseCategory = fileAction
+          await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
+          this.emit('assessed-response', bbResponseCategory, bbid, blindFileName)
+        } else {
+          // no data return message to inform
+          let outFlow = {}
+          outFlow.type = 'query-no-data'
+          outFlow.action = ''
+          outFlow.text = 'a peer has send chart data'
+          outFlow.query = false
+          outFlow.bbid = inFlow.bbid
+          this.emit('beebee-response', outFlow)
+        }
+      } else {
+
+      }
+  }
+
+  /**
   *  temp hack to read csv file
   * @method blindFiledataPrep
   *
@@ -509,7 +580,7 @@ class BbAI extends EventEmitter {
     }, bboxID);
     
     // Clean up
-    await this.beebeeAgent.dispose();
+    // await this.beebeeAgent.dispose();  clean up at end of bentoboxDS use?
   }
 
 }

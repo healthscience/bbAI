@@ -66,7 +66,8 @@ class LlmManger extends EventEmitter {
     LLMcontext.compute = statisticsType
     LLMcontext.visstyle = visStyle
     LLMcontext.sequence = initialDataExtract
-    this.emit('hop-manager-response', LLMcontext)
+    // this.emit('hop-manager-response', LLMcontext)
+    return LLMcontext
   }
 
   /**

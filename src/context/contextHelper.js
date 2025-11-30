@@ -47,6 +47,7 @@ class ContextHelper extends EventEmitter {
   */
   inputLanuage = async function (question, inFlow) {
     let chartCommand = false
+    let quickContext = {}
     // if chart, upload, library  key words then limit NPL
     let firstWord = question.split(' ')[0]
     if (firstWord.toLowerCase() === 'chart') {
@@ -60,13 +61,14 @@ class ContextHelper extends EventEmitter {
     }
     if (chartCommand === true) {
       this.responseLength[inFlow.bbid] = 1
-      this.liveNLP.feedNLP(question, inFlow)
-    } else { 
-      // ask agents via HOP-Learn to suggest reply
-      this.responseLength[inFlow.bbid] = 2
-      await this.hopLearn.coordinateAgents(inFlow)
-      this.liveNLP.feedNLP(question, inFlow)
+      quickContext.bentobox = true
+      quickContext.data = this.liveNLP.feedNLP(question, inFlow)
+    } else {
+      // no bentoboxds keyword detected.
+      // ask beebee for its best reply
+      quickContext.bentobox = false
     }
+    return quickContext
   }
 
   /**
