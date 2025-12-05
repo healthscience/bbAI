@@ -47,17 +47,23 @@ class ContextHelper extends EventEmitter {
   */
   inputLanuage = async function (question, inFlow) {
     let chartCommand = false
+    let helloCommand = false
+    let uploadCommand = false
+    let libraryCommand = false
     let quickContext = {}
     // if chart, upload, library  key words then limit NPL
     let firstWord = question.split(' ')[0]
+    console.log(firstWord)
+    console.log('wwwwwwwwwwwwwwwwwwwww')
     if (firstWord.toLowerCase() === 'chart') {
+      console.log('yes chart')
       chartCommand = true
     } else if (firstWord.toLowerCase() === 'hello') {
-      chartCommand = true
+      helloCommand = true
     } else if (firstWord.toLowerCase() === 'upload') {
-      chartCommand = true
+      uploadCommand = true
     } else if (firstWord.toLowerCase() === 'library') {
-      chartCommand = true
+      libraryCommand = true
     }
     if (chartCommand === true) {
       this.responseLength[inFlow.bbid] = 1
@@ -67,7 +73,9 @@ class ContextHelper extends EventEmitter {
       // no bentoboxds keyword detected.
       // ask beebee for its best reply
       quickContext.bentobox = false
+      quickContext.bbcommand = firstWord.toLowerCase()
     }
+    console.log(quickContext)
     return quickContext
   }
 
