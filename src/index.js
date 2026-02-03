@@ -115,7 +115,7 @@ class BbAI extends EventEmitter {
     console.log(inFlow)
     // does a new chat session need start and or chat history added?
     if (inFlow.data.session === true) {
-      this.beebeeAgent.startNewChatSession(inFlow.bbid)
+      this.beebeeAgent.beebee.startNewChatSession(inFlow.bbid)
     }
     // take quick look with beebee own bentoboxDS NLP skills
     let firstReview = await this.contextHelper.inputLanuage(inFlow.data.data.text, inFlow)
