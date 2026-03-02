@@ -52,6 +52,11 @@ beforeEach(async () => {
     // Start the BeeBee agent and wait for initialization to complete
     await bbAI.startBeeBee();
     await initPromise;
+    try {
+      bbAI.beebeeAgent.beebee.startNewChatSession(bboxid);
+    } catch (e) {
+      console.error('Error in startNewChatSession:', e);
+    }
     // Call the beebeeMain function
     let prompt = "How to live a healthy life in 100 words please?";
     await bbAI.beebeeMain(prompt, bboxid);

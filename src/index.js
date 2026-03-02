@@ -11,6 +11,8 @@
 */
 import util from 'util'
 import EventEmitter from 'events'
+import { stitchPrompt } from "./beebeeAgent/stitcher.js";
+import { processResponse } from "./beebeeAgent/handler.js";
 import BeebeeAgent from './beebeeAgent/beebeeLearn.js'
 import AgentNetwork from './agents/networkAgents.js'
 import BlindData from './data/blindData.js'
@@ -92,11 +94,23 @@ class BbAI extends EventEmitter {
   *
   */
   listenBeeBeeAgent = function () {
-    this.beebeeAgent.on('beebee-agent-reply', (data) => {
+    this.beebeeAgent.on('beebee-agent-reply', async (data) => {
       if (data.type === 'response_complete') {
         // inform bentobox of complete reply and save in chat history via BentoBoxDS
         console.log('complete beebee response')
         console.log(data)
+        
+        // Process the response using the new handler
+        const processed = await processResponse(data.text || data.response || '', this.peerQ);
+        
+        let outFlow = {
+          type: 'bbai-reply',
+          action: 'npl-reply',
+          bbid: data.bbid,
+          query: false,
+          data: processed
+        };
+        this.emit('beebee-response', outFlow);
       } else if (data.type === 'token') {
         // pass on to assessment and then allow streaming part back to bentoboxds
         // this.emit('beebee-response-stream', data)
@@ -118,19 +132,19 @@ class BbAI extends EventEmitter {
       this.beebeeAgent.beebee.startNewChatSession(inFlow.bbid)
     }
     // take quick look with beebee own bentoboxDS NLP skills
-    let firstReview = await this.contextHelper.inputLanuage(inFlow.data.data.text, inFlow)
+    let firstReview = await this.contextHelper.inputLanuage(inFlow.data.content, inFlow)
     console.log('quick context gather and plan action')
     console.log(firstReview)
     // beebee has to decide on best info gathering paths.
     // check for tools use
     let toolUse = false
-    if (inFlow.data.data.tools.length > 0) {
+    if (inFlow.data.tools.length > 0) {
       toolUse = true
     }
     // start action based on tool
     let uploadTools = false
     if (toolUse === true) {
-      for (let tool of inFlow.data.data.tools ) {
+      for (let tool of inFlow.data.tools ) {
         if (tool === 'upload') {
           uploadTools = true
         }
@@ -163,41 +177,20 @@ class BbAI extends EventEmitter {
       // save the squency data to a blind file
       let blindFileName = 'blindt' + inFlow.bbid
       await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(firstReview.data.sequence))
-      let queryData = await this.HOPqueryDataPrep(inFlow.data.data.text, firstReview.data, inFlow.bbid)
+      let queryData = await this.HOPqueryDataPrep(inFlow.data.content, firstReview.data, inFlow.bbid)
       console.log('HOPquery perp over ========')
       console.log(queryData)
       this.emit('beebee-response', queryData)
     } else if (dataBlindOptions === false && firstReview.bentobox === true && uploadTools === true)  {
       // data file already saved on upload, identify by name and file type and blind prefix
-      let queryData = await this.HOPqueryDataPrep(inFlow.data.data.text, firstReview.data, inFlow.bbid)
+      let queryData = await this.HOPqueryDataPrep(inFlow.data.content, firstReview.data, inFlow.bbid)
       this.emit('beebee-response', queryData)
     }
 
     // pull together all parts and ask beebeee to build response
-    let beebeePrompt = {}
-    beebeePrompt.rawinput = inFlow.data.data.text
-    if (firstReview.bentobox === true) {
-      // send HOPquery to HOP
-      beebeePrompt.mode = 'hopquery'
-      beebeePrompt.task = 'a HOPquery has been prepared.'
-      // upload
-      if (uploadTools === true) {
-        beebeePrompt.upload = 'Thank you for the file data'
-        // action reply
-        beebeePrompt.reply = 'Please produce very short reply informing peer bentobox has been prepared.'
-        // serialize object for LLM
-        let serializePrompt = JSON.stringify(beebeePrompt) // this.serializeJSobject(beebeePrompt)
-        console.log(serializePrompt)
-        // give beeebee the context to reply to
-        await this.beebeeMain(serializePrompt, inFlow.bbid)
-        // beebee will emit response
-      }
-    } else {
-      let queryBeeBee = JSON.stringify(beebeePrompt)
-      console.log(queryBeeBee)
-      // none HOPquery, process as question for TINY agent beebee
-      await this.beebeeMain(queryBeeBee, inFlow.bbid)
-    }
+    let stitchedPrompt = stitchPrompt(inFlow.data.content);
+    console.log('Stitched Prompt:', stitchedPrompt);
+    await this.beebeeMain(stitchedPrompt, inFlow.bbid);
   }
 
   /**
@@ -386,7 +379,7 @@ class BbAI extends EventEmitter {
   */
   libraryRefContracts = async function () {
     let publicLibrary = {}
-    publicLibrary = await this.nxtLibrary.liveHolepunch.BeeData.getPublicLibraryRange()
+    // publicLibrary = await this.nxtLibrary.liveHolepunch.BeeData.getPublicLibraryRange()
     return publicLibrary
   }
 
