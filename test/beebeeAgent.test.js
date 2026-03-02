@@ -24,6 +24,7 @@ beforeEach(async () => {
     let bboxid = '12345'
 
     const eventPromise = new Promise((resolve) => {
+      let responsesReceived = 0;
       bbAI.beebeeAgent.on('beebee-agent-reply', (data) => {
         // Add assertions here to verify the behavior of the beebeeMain function
         expect(data).toBeDefined();
@@ -35,8 +36,11 @@ beforeEach(async () => {
           console.log('llm ready')
         } else {
           expect(data.type).toBe('response_complete');
-          // Resolve the promise when the event is received
-          resolve();
+          responsesReceived++;
+          // Resolve the promise when both events (Reply + Extraction) are received
+          if (responsesReceived >= 2) {
+            resolve();
+          }
         }
       });
     });
@@ -53,13 +57,26 @@ beforeEach(async () => {
     await bbAI.startBeeBee();
     await initPromise;
     try {
-      bbAI.beebeeAgent.beebee.startNewChatSession(bboxid);
+      const { MASTER_PROMPT } = await import('../src/beebeeAgent/prompts.js');
+      bbAI.beebeeAgent.beebee.startNewChatSession(bboxid, MASTER_PROMPT);
     } catch (e) {
       console.error('Error in startNewChatSession:', e);
     }
     // Call the beebeeMain function
     let prompt = "How to live a healthy life in 100 words please?";
+    
+    // Step 1: Peer Reply
+    bbAI.currentTask = 'PEER_REPLY';
     await bbAI.beebeeMain(prompt, bboxid);
+
+    // Step 2: Extraction (The 3Cs)
+    bbAI.currentTask = 'LENS_EXTRACTION';
+    const extractionPrompt = `[TASK: EXTRACT LENSES]\nInput: "${prompt}"`;
+    await bbAI.beebeeMain(extractionPrompt, bboxid, {
+      grammar: 'lens',
+      temperature: 0.2,
+      maxTokens: 128
+    });
 
     // Wait for the event to be received
     await eventPromise;

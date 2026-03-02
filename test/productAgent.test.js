@@ -53,13 +53,22 @@ beforeEach(async () => {
     await bbAI.startBeeBee();
     await initPromise;
     try {
-      bbAI.beebeeAgent.beebee.startNewChatSession(bboxid);
+      // Use the new startNewChatSession with MASTER_PROMPT
+      const { MASTER_PROMPT } = await import('../src/beebeeAgent/prompts.js');
+      bbAI.beebeeAgent.beebee.startNewChatSession(bboxid, MASTER_PROMPT);
     } catch (e) {
       console.error('Error in startNewChatSession:', e);
     }
     // Call the beebeeMain function
     let prompt = "What skin products to use post swimming in chlorene swimming pool please?";
+    
+    // Step 1: Peer Reply
+    bbAI.currentTask = 'PEER_REPLY';
     await bbAI.beebeeMain(prompt, bboxid);
+
+    // Step 2: Extraction (Simulated or triggered by the flow)
+    // In the real flow, beebeeFlow handles this. 
+    // For the test, we just want to ensure the main call works.
 
     // Wait for the event to be received
     await eventPromise;

@@ -11,6 +11,7 @@
 */
 import util from 'util'
 import EventEmitter from 'events'
+import { MASTER_PROMPT } from "./beebeeAgent/prompts.js";
 import { stitchPrompt } from "./beebeeAgent/stitcher.js";
 import { processResponse } from "./beebeeAgent/handler.js";
 import BeebeeAgent from './beebeeAgent/beebeeLearn.js'
@@ -35,6 +36,7 @@ class BbAI extends EventEmitter {
     this.blindData = new BlindData(this.nxtLibrary)
     this.hopDML = new HopDML(this.nxtLibrary)
     this.peerQ = ''
+    this.currentTask = null
     this.contextHelper = new ContextHelp()
     this.gatherAI()
     this.listenToHOP()
@@ -95,13 +97,32 @@ class BbAI extends EventEmitter {
   */
   listenBeeBeeAgent = function () {
     this.beebeeAgent.on('beebee-agent-reply', async (data) => {
+      console.log('beebee-agent-reply-----------')
+      console.log(data)
       if (data.type === 'response_complete') {
         // inform bentobox of complete reply and save in chat history via BentoBoxDS
         console.log('complete beebee response')
         console.log(data)
         
-        // Process the response using the new handler
-        const processed = await processResponse(data.text || data.response || '', this.peerQ);
+        let processed;
+        if (this.currentTask === 'LENS_EXTRACTION') {
+           try {
+             // The data.data is the full response from the model
+             const rawText = data.data || '';
+             const parsed = JSON.parse(rawText.trim());
+             processed = {
+               text: '',
+               lens: parsed
+             };
+           } catch (e) {
+             console.error('Failed to parse grammar response:', e);
+             processed = { text: data.data, lens: { state: 'Neutral' } };
+           }
+           this.currentTask = null;
+        } else {
+           // Process the response using the new handler
+           processed = await processResponse(data || data.response || data.data || '', this.peerQ);
+        }
         
         let outFlow = {
           type: 'bbai-reply',
@@ -129,7 +150,7 @@ class BbAI extends EventEmitter {
     console.log(inFlow)
     // does a new chat session need start and or chat history added?
     if (inFlow.data.session === true) {
-      this.beebeeAgent.beebee.startNewChatSession(inFlow.bbid)
+      this.beebeeAgent.beebee.startNewChatSession(inFlow.bbid, MASTER_PROMPT)
     }
     // take quick look with beebee own bentoboxDS NLP skills
     let firstReview = await this.contextHelper.inputLanuage(inFlow.data.content, inFlow)
@@ -188,9 +209,17 @@ class BbAI extends EventEmitter {
     }
 
     // pull together all parts and ask beebeee to build response
-    let stitchedPrompt = stitchPrompt(inFlow.data.content);
-    console.log('Stitched Prompt:', stitchedPrompt);
-    await this.beebeeMain(stitchedPrompt, inFlow.bbid);
+    this.currentTask = 'PEER_REPLY';
+    await this.beebeeMain(inFlow.data.content, inFlow.bbid);
+
+    // Step 2: Extraction
+    this.currentTask = 'LENS_EXTRACTION';
+    const extractionPrompt = `[TASK: EXTRACT LENSES]\nInput: "${inFlow.data.content}"`;
+    await this.beebeeMain(extractionPrompt, inFlow.bbid, {
+      grammar: 'lens',
+      temperature: 0.2,
+      maxTokens: 128
+    });
   }
 
   /**
@@ -485,11 +514,12 @@ class BbAI extends EventEmitter {
   * @method beebeeMain
   *
   */
-  beebeeMain = async function (promptIN, bboxID) {
+  beebeeMain = async function (promptIN, bboxID, options = {}) {
     // Simulate receiving messages from BentoBoxD
     await this.beebeeAgent.handleBentoBoxMessage({
       type: 'prompt_stream',
-      prompt: promptIN
+      prompt: promptIN,
+      options: options
     }, bboxID);
     
     // Clean up

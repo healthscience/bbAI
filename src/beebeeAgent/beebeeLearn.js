@@ -1,11 +1,15 @@
 import EventEmitter from 'events'
 import { createBeeBee }  from 'beebee-agent'
+import { getLlama } from 'node-llama-cpp'
+import { MASTER_PROMPT, LENS_SCHEMA } from './prompts.js'
 
 // This would be inside the beebee-ai package
 class BeeBeeAgent extends EventEmitter {
   constructor() {
     super()
     this.beebee = null;
+    this.grammar = null;
+    this.llama = null;
     // this.websocketClients = new Set(); // BentoBoxDS connections
   }
   
@@ -13,13 +17,24 @@ class BeeBeeAgent extends EventEmitter {
     // Create BeeBee instance with BentoBoxDS system prompt
     this.beebee = await createBeeBee({
       temperature: 0.7,
-      maxTokens: 512
+      maxTokens: 512,
+      systemPrompt: MASTER_PROMPT
     });
+
+    await this.beebee.initialize();
+    this.llama = this.beebee.getLlama();
+
+    this.grammar = await this.llama.createGrammarForJsonSchema(LENS_SCHEMA);
     
     // Set up event listeners
     this.beebee.on('ready', () => {
       this.broadcastToClients({ type: 'llm_ready' });
     });
+
+    // If already initialized, emit ready
+    if (this.beebee.isInitialized) {
+      this.broadcastToClients({ type: 'llm_ready' });
+    }
     
     this.beebee.on('token', (token, receivedBboxID) => {
       // Stream tokens to BentoBoxDS clients
@@ -62,11 +77,17 @@ class BeeBeeAgent extends EventEmitter {
     switch (type) {
       case 'prompt':
         // Non-streaming prompt
+        if (options.grammar === 'lens') {
+          options.grammar = this.grammar;
+        }
         await this.beebee.prompt(prompt, options, bboxID);
         break;
         
       case 'prompt_stream':
         // Streaming prompt
+        if (options.grammar === 'lens') {
+          options.grammar = this.grammar;
+        }
         await this.beebee.promptStream(prompt, options, onToken, bboxID);
         break;
         
