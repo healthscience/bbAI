@@ -12,8 +12,7 @@
 import util from 'util'
 import EventEmitter from 'events'
 import { MASTER_PROMPT } from "./beebeeAgent/prompts.js";
-import { stitchPrompt } from "./beebeeAgent/stitcher.js";
-import { processResponse } from "./beebeeAgent/handler.js";
+import { processResponse, StreamFilter } from "./beebeeAgent/handler.js";
 import BeebeeAgent from './beebeeAgent/beebeeLearn.js'
 import AgentNetwork from './agents/networkAgents.js'
 import BlindData from './data/blindData.js'
@@ -96,27 +95,29 @@ class BbAI extends EventEmitter {
   *
   */
   listenBeeBeeAgent = function () {
+    let streamFilter = new StreamFilter();
+
     this.beebeeAgent.on('beebee-agent-reply', async (data) => {
-      console.log('beebee-agent-reply-----------')
-      console.log(data)
+      // console.log('beebee-agent-reply-----------')
+      // console.log(data)
       if (data.type === 'response_complete') {
         // inform bentobox of complete reply and save in chat history via BentoBoxDS
         console.log('complete beebee response')
         console.log(data)
-        
+        console.log('current task' + this.currentTask)
         let processed;
         if (this.currentTask === 'LENS_EXTRACTION') {
            try {
              // The data.data is the full response from the model
              const rawText = data.data || '';
              const parsed = JSON.parse(rawText.trim());
-             processed = {
-               text: '',
+             processed = [{
+               type: 'lens-extraction',
                lens: parsed
-             };
+             }];
            } catch (e) {
              console.error('Failed to parse grammar response:', e);
-             processed = { text: data.data, lens: { state: 'Neutral' } };
+             processed = [{ type: 'chat-reply', text: data.data }, { type: 'lens-extraction', lens: { state: 'Neutral' } }];
            }
            this.currentTask = null;
         } else {
@@ -124,18 +125,27 @@ class BbAI extends EventEmitter {
            processed = await processResponse(data || data.response || data.data || '', this.peerQ);
         }
         
-        let outFlow = {
-          type: 'bbai-reply',
-          action: 'npl-reply',
-          bbid: data.bbid,
-          query: false,
-          data: processed
-        };
-        this.emit('beebee-response', outFlow);
+        // Emit each processed message separately
+        processed.forEach(msg => {
+          let outFlow = {
+            type: 'bbai-reply',
+            action: 'npl-reply',
+            bbid: data.bbid,
+            query: false,
+            data: msg
+          };
+          this.emit('beebee-response', outFlow);
+        });
+
+        // Reset stream filter for next turn
+        streamFilter = new StreamFilter();
+
       } else if (data.type === 'token') {
         // pass on to assessment and then allow streaming part back to bentoboxds
-        // this.emit('beebee-response-stream', data)
-        this.emit('beebee-pre-response', data)
+        const cleanToken = streamFilter.process(data.data || '');
+        if (cleanToken) {
+          this.emit('beebee-pre-response', { ...data, data: cleanToken });
+        }
       }
     })
   }

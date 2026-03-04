@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stripXML, parseUIData, processResponse } from '../src/beebeeAgent/handler.js';
+import { stripXML, parseUIData, processResponse, StreamFilter } from '../src/beebeeAgent/handler.js';
 
 describe('Handler Logic', () => {
   it('should strip XML correctly', () => {
@@ -21,10 +21,57 @@ describe('Handler Logic', () => {
     expect(parsed.state).toBe('Neutral');
   });
 
-  it('should detect routing tags', async () => {
-    const raw = 'I need to route this to [[MEDICAL]].';
-    const result = await processResponse(raw, 'my symptoms');
-    expect(result.lens.state).toBe('Routing');
-    expect(result.lens.target).toBe('MEDICAL');
+  it('should return multiple messages including routing', async () => {
+    const raw = 'I need to route this to [[MEDICAL]]. <ui_data>{"state": "Active"}</ui_data>';
+    const results = await processResponse(raw, 'my symptoms');
+    
+    expect(results).toHaveLength(3);
+    expect(results.find(m => m.type === 'chat-reply').text).toBe('I need to route this to .');
+    expect(results.find(m => m.type === 'lens-extraction').lens.state).toBe('Active');
+    expect(results.find(m => m.type === 'agent-notification').agent).toBe('MEDICAL');
+  });
+});
+
+describe('StreamFilter', () => {
+  it('should filter out <ui_data> blocks during streaming', () => {
+    const filter = new StreamFilter();
+    const tokens = [
+      'Hello ',
+      'world',
+      '! <ui',
+      '_data>',
+      '{"secret":',
+      '123}',
+      '</ui_data>',
+      ' How are ',
+      'you?'
+    ];
+
+    let output = '';
+    tokens.forEach(t => {
+      output += filter.process(t);
+    });
+    output += filter.flush();
+
+    expect(output).toBe('Hello world!  How are you?');
+  });
+
+  it('should filter out [[Agent]] tags during streaming', () => {
+    const filter = new StreamFilter();
+    const tokens = [
+      'Please ',
+      'ask ',
+      '[[PERP',
+      'LEXITY]]',
+      ' for help.'
+    ];
+
+    let output = '';
+    tokens.forEach(t => {
+      output += filter.process(t);
+    });
+    output += filter.flush();
+
+    expect(output).toBe('Please ask  for help.');
   });
 });

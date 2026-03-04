@@ -1,6 +1,6 @@
 {
   "name": "beebee-ai",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "BB toolkit helper AI",
   "main": "src/index.js",
   "type": "module",
@@ -18,8 +18,7 @@
     "hop-dml": "^0.0.2",
     "hop-learn": "^0.1.1",
     "hop-query-builder": "^0.2.6",
-    "luxon": "^3.4.4",
-    "node-llama-cpp": "^3.17.1"
+    "luxon": "^3.4.4"
   },
   "devDependencies": {
     "vitest": "^4.0.9"

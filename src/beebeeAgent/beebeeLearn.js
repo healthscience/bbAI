@@ -1,6 +1,5 @@
 import EventEmitter from 'events'
 import { createBeeBee }  from 'beebee-agent'
-import { getLlama } from 'node-llama-cpp'
 import { MASTER_PROMPT, LENS_SCHEMA } from './prompts.js'
 
 // This would be inside the beebee-ai package
@@ -21,13 +20,20 @@ class BeeBeeAgent extends EventEmitter {
       systemPrompt: MASTER_PROMPT
     });
 
-    await this.beebee.initialize();
     this.llama = this.beebee.getLlama();
 
-    this.grammar = await this.llama.createGrammarForJsonSchema(LENS_SCHEMA);
+    if (this.llama) {
+      this.grammar = await this.llama.createGrammarForJsonSchema(LENS_SCHEMA);
+    }
     
     // Set up event listeners
-    this.beebee.on('ready', () => {
+    this.beebee.on('ready', async () => {
+      if (!this.grammar) {
+        this.llama = this.beebee.getLlama();
+        if (this.llama) {
+          this.grammar = await this.llama.createGrammarForJsonSchema(LENS_SCHEMA);
+        }
+      }
       this.broadcastToClients({ type: 'llm_ready' });
     });
 
