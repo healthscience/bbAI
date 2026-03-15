@@ -14,7 +14,7 @@
   "author": "aboynejames@gmail.com",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "beebee-agent": "file:../agents/beebee",
+    "beebee-agent": "^0.5.0",
     "hop-dml": "^0.0.2",
     "hop-learn": "^0.1.1",
     "hop-query-builder": "^0.2.6",

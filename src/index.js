@@ -130,6 +130,7 @@ class BbAI extends EventEmitter {
           let outFlow = {
             type: 'bbai-reply',
             action: 'npl-reply',
+            task: msg.type,
             bbid: data.bbid,
             query: false,
             data: msg
