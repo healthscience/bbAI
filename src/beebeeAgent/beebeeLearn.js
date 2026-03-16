@@ -67,11 +67,13 @@ class BeeBeeAgent extends EventEmitter {
       });
     });
   }
-  
-  // Called when receiving message from BentoBoxDS
+
+  /*
+  * Called when receiving message from BentoBoxDS
+  * @method handleBentoBoxMessage
+  * */
   async handleBentoBoxMessage(message, bboxID) {
     const { type, prompt, options = {} } = message;
-
     let fullResponse = '';
     const tokensWithBboxID = [];
 
@@ -81,11 +83,12 @@ class BeeBeeAgent extends EventEmitter {
     };
   
     switch (type) {
-      case 'prompt':
+       case 'prompt':
         // Non-streaming prompt
         if (options.grammar === 'lens') {
           options.grammar = this.grammar;
         }
+
         await this.beebee.prompt(prompt, options, bboxID);
         break;
         
@@ -101,12 +104,19 @@ class BeeBeeAgent extends EventEmitter {
         console.log('Unknown message type:', type);
     }
   }
-  
-  // Simulate broadcasting to websocket clients
+
+  /*
+  * Simulate broadcasting to websocket clients
+  * @method broadcastToClients
+  */
   broadcastToClients(message) {
     this.emit('beebee-agent-reply', message)
   }
   
+  /*
+  * close down small llm
+  * @method dispose
+  */
   async dispose() {
     if (this.beebee) {
       await this.beebee.dispose();

@@ -11,7 +11,7 @@
 */
 import util from 'util'
 import EventEmitter from 'events'
-import { MASTER_PROMPT } from "./beebeeAgent/prompts.js";
+import { MASTER_PROMPT, TASK_PROMPTS } from "./beebeeAgent/prompts.js";
 import { processResponse, StreamFilter } from "./beebeeAgent/handler.js";
 import BeebeeAgent from './beebeeAgent/beebeeLearn.js'
 import AgentNetwork from './agents/networkAgents.js'
@@ -72,7 +72,6 @@ class BbAI extends EventEmitter {
   */
   coordinationDML = async function (message) {
     // prepare proof of work and message to network peer
-    console.log('pare Proof of work')
     this.hopDML.powEvidence(message)
   }
 
@@ -98,13 +97,9 @@ class BbAI extends EventEmitter {
     let streamFilter = new StreamFilter();
 
     this.beebeeAgent.on('beebee-agent-reply', async (data) => {
-      // console.log('beebee-agent-reply-----------')
-      // console.log(data)
       if (data.type === 'response_complete') {
         // inform bentobox of complete reply and save in chat history via BentoBoxDS
-        console.log('complete beebee response')
-        console.log(data)
-        console.log('current task' + this.currentTask)
+
         let processed;
         if (this.currentTask === 'LENS_EXTRACTION') {
            try {
@@ -157,16 +152,12 @@ class BbAI extends EventEmitter {
   *
   */
   beebeeFlow = async function (inFlow) {
-    console.log('beebeeFLOW')
-    console.log(inFlow)
     // does a new chat session need start and or chat history added?
     if (inFlow.data.session === true) {
       this.beebeeAgent.beebee.startNewChatSession(inFlow.bbid, MASTER_PROMPT)
     }
     // take quick look with beebee own bentoboxDS NLP skills
     let firstReview = await this.contextHelper.inputLanuage(inFlow.data.content, inFlow)
-    console.log('quick context gather and plan action')
-    console.log(firstReview)
     // beebee has to decide on best info gathering paths.
     // check for tools use
     let toolUse = false
@@ -188,7 +179,6 @@ class BbAI extends EventEmitter {
       // look if tools were used e.g. file upload or api to email or call other agent tools?
       let blindFileStatus = {}
       blindFileStatus = await this.blindData.filePreviewData(inFlow.data, inFlow.bbid)
-      console.log(blindFileStatus)
       if (blindFileStatus.type === 'blindfile-data') {
         dataBlindOptions = true
         let outFlow = {}
@@ -205,32 +195,30 @@ class BbAI extends EventEmitter {
 
     // check if a HOPquery is ready for SafeFlow-ECS?
     if (dataBlindOptions === false && firstReview.bentobox === true && uploadTools === false) {
-      console.log('pass rororoororo anandannadn')
       // save the squency data to a blind file
       let blindFileName = 'blindt' + inFlow.bbid
       await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(firstReview.data.sequence))
       let queryData = await this.HOPqueryDataPrep(inFlow.data.content, firstReview.data, inFlow.bbid)
-      console.log('HOPquery perp over ========')
-      console.log(queryData)
       this.emit('beebee-response', queryData)
     } else if (dataBlindOptions === false && firstReview.bentobox === true && uploadTools === true)  {
       // data file already saved on upload, identify by name and file type and blind prefix
       let queryData = await this.HOPqueryDataPrep(inFlow.data.content, firstReview.data, inFlow.bbid)
       this.emit('beebee-response', queryData)
     }
-
-    // pull together all parts and ask beebeee to build response
-    this.currentTask = 'PEER_REPLY';
-    await this.beebeeMain(inFlow.data.content, inFlow.bbid);
-
-    // Step 2: Extraction
-    this.currentTask = 'LENS_EXTRACTION';
-    const extractionPrompt = `[TASK: EXTRACT LENSES]\nInput: "${inFlow.data.content}"`;
-    await this.beebeeMain(extractionPrompt, inFlow.bbid, {
-      grammar: 'lens',
-      temperature: 0.2,
-      maxTokens: 128
-    });
+    if (inFlow.data.context === 'extraction') {
+      // Step 2: Extraction
+      this.currentTask = 'LENS_EXTRACTION';
+      const extractionPrompt = `${MASTER_PROMPT}\n${TASK_PROMPTS.CONTEXT_EXTRACTION}\n\nInput: "${inFlow.data.content}"`;
+      await this.beebeeMain(extractionPrompt, inFlow.bbid, {
+        grammar: 'lens',
+        temperature: 0.2,
+        maxTokens: 128
+      });
+    } else {
+      // pull together all parts and ask beebeee to build response
+      this.currentTask = 'PEER_REPLY';
+      await this.beebeeMain(inFlow.data.content, inFlow.bbid);
+    }
   }
 
   /**
@@ -304,8 +292,6 @@ class BbAI extends EventEmitter {
     */
     // assess all part of beebee reply and pass on streaming output back to bentoboxds
     this.on('beebee-pre-response', (token) => {
-      // console.log('token---------------')
-      // console.log(token)
       // look for consider reply part of stream
       let outPutMessage = true
       if (token.data === 'ouput') {

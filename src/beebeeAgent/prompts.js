@@ -5,27 +5,46 @@ Tone: Supportive, concise, minimalist.
 Constraint: Never hallucinate.
 `.trim();
 
+
 export const LENS_SCHEMA = {
     type: "object",
     properties: {
-        capacity: { type: "string" },
-        context: { type: "string" },
-        coherence: { type: "string" },
+        capacity: { 
+          type: "string", 
+          description: "MUST BE EXACTLY: 'Link to Energy Emulation'" 
+        },
+        context: { 
+          type: "string", 
+          description: "Extract ONLY 2-4 key noun phrases representing the core essence of the input. DO NOT return the full input." 
+        },
+        coherence: { 
+          type: "string", 
+          description: "MUST BE EXACTLY: 'Awaiting Besearch Integration'" 
+        },
         route: { enum: ["NONE", "MEDICAL", "PRODUCT", "RESEARCH"] }
     }
 };
 
+
+
 export const TASK_PROMPTS = {
   CONTEXT_EXTRACTION: `
-[TASK: EXTRACT LENSES]
-Identify keywords for the Three-C Lenses:
-- Capacity: Performance/Energy goals.
-- Context: Environment/Tools/Data.
-- Coherence: Friction/Balance/Recovery.
+[TASK: SYSTEMIC EXTRACTION]
+Analyze user input to extract the core essence into 'context' keywords.
 
-If the user requires external data, trigger a ROUTE:
-- MEDICAL: Symptoms, skin, health (Route to ii.inc).
-- PRODUCT: Buying, specs, chemicals (Route to Perplexity).
-- RESEARCH: PubMed, papers, deep science (Route to Besearch).
+[STATIC FIELDS - DO NOT ALTER]
+- capacity: ALWAYS return exactly "Link to Energy Emulation".
+- coherence: ALWAYS return exactly "Awaiting Besearch Integration".
+
+[DYNAMIC FIELD]
+- context: Extract ONLY 2-4 key noun phrases (e.g., "400IM", "Tay Estuary", "Longevity") that capture the essence of the input. NEVER return the full input sentence.
+
+[ROUTING]
+- Choose RESEARCH, PRODUCT, MEDICAL, or NONE.
+
+[STRICT CONSTRAINT]
+DO NOT extract information for capacity or coherence. 
+DO NOT use user data to fill capacity or coherence.
+Use ONLY the provided static placeholders.
 `.trim()
 };
