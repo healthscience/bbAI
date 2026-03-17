@@ -23,17 +23,17 @@ import HopDML from 'hop-dml'
 
 class BbAI extends EventEmitter {
 
-  constructor(xlibrary) {
+  constructor(contextAgent) {
     super()
     this.hello = 'beebee-AI--{{hello}}'
     this.publicLibrary = {}
-    this.nxtLibrary = xlibrary
+    this.dataNetworkLive = contextAgent
     this.beebeeAgent = new BeebeeAgent();
     this.queryBuilder = new HopQuerybuider()
     this.beSearch = new BeSearch()
     this.agentsCMP = new AgentNetwork()
-    this.blindData = new BlindData(this.nxtLibrary)
-    this.hopDML = new HopDML(this.nxtLibrary)
+    this.blindData = new BlindData({})
+    this.hopDML = new HopDML({})
     this.peerQ = ''
     this.currentTask = null
     this.contextHelper = new ContextHelp()
@@ -50,7 +50,10 @@ class BbAI extends EventEmitter {
   *
   */
   listenHolepunchLive = async function () {
+    console.log('beebee-AI--{{listenHolepunchLive}}')
     this.publicLibrary = await this.libraryRefContracts()
+    console.log('public library any contracgs?')
+    console.log(this.publicLibrary)
     // ask the oracle if anything to bring to attention
     await this.beSearch.listenOracles()
   }
@@ -197,7 +200,8 @@ class BbAI extends EventEmitter {
     if (dataBlindOptions === false && firstReview.bentobox === true && uploadTools === false) {
       // save the squency data to a blind file
       let blindFileName = 'blindt' + inFlow.bbid
-      await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(firstReview.data.sequence))
+      console.log('holepuch')
+      await this.dataNetworkLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(firstReview.data.sequence))
       let queryData = await this.HOPqueryDataPrep(inFlow.data.content, firstReview.data, inFlow.bbid)
       this.emit('beebee-response', queryData)
     } else if (dataBlindOptions === false && firstReview.bentobox === true && uploadTools === true)  {
@@ -405,7 +409,7 @@ class BbAI extends EventEmitter {
   */
   libraryRefContracts = async function () {
     let publicLibrary = {}
-    // publicLibrary = await this.nxtLibrary.liveHolepunch.BeeData.getPublicLibraryRange()
+    publicLibrary = await this.dataNetworkLive.BeeData.getPublicLibraryRange()
     return publicLibrary
   }
 
