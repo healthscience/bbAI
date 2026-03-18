@@ -409,7 +409,7 @@ class BbAI extends EventEmitter {
   */
   libraryRefContracts = async function () {
     let publicLibrary = {}
-    publicLibrary = await this.dataNetworkLive.BeeData.getPublicLibraryRange()
+    publicLibrary = await this.dataNetworkLive.BeeData.getPublicLibraryRefRange()
     return publicLibrary
   }
 
