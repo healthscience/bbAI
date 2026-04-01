@@ -51,9 +51,9 @@ class BbAI extends EventEmitter {
   */
   listenHolepunchLive = async function () {
     console.log('beebee-AI--{{listenHolepunchLive}}')
-    this.publicLibrary = await this.libraryRefContracts()
+    this.publicLibrary = {} // await this.libraryRefContracts()
     console.log('public library any contracgs?')
-    console.log(this.publicLibrary)
+    console.log(this.publicLibrary.length)
     // ask the oracle if anything to bring to attention
     await this.beSearch.listenOracles()
   }
@@ -409,7 +409,7 @@ class BbAI extends EventEmitter {
   */
   libraryRefContracts = async function () {
     let publicLibrary = {}
-    publicLibrary = await this.dataNetworkLive.BeeData.getPublicLibraryRefRange()
+    publicLibrary = await this.dataNetworkLive.BeeData.getPublicLibraryRefRange('datatype')
     return publicLibrary
   }
 
