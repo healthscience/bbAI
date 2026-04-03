@@ -5,7 +5,7 @@
  */
 
 import { getContext } from './context.js';
-import { Messenger } from '../../messenger/index.js';
+// import { Messenger } from '../../messenger/index.js';
 
 const VALVE_CONFIG = {
   HIGH_INTENSITY_THRESHOLD: 0.8, // 80% E-Value usage
@@ -50,7 +50,7 @@ export const MetabolicValve = {
     
     // Communicate the "Valve" state to the P2P layer
     // This tells Holepunch to throttle or ignore incoming 'WEIGHT_REQUESTS'
-    await Messenger.setPolicy('NETWORK_ALTRUISM_LIMIT', aperture);
+    // await Messenger.setPolicy('NETWORK_ALTRUISM_LIMIT', aperture);
 
     console.log(`[Bee] Metabolic Valve adjusted to: ${aperture * 100}%`);
     

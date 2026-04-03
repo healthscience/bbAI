@@ -9,6 +9,11 @@ import { Memory } from '../brain/memory.js';
 
 export const LexiconHarvester = {
   name: "lexicon_harvester",
+  contextAgent: null,
+
+  init(contextAgent) {
+    this.contextAgent = contextAgent;
+  },
 
   /**
    * Entry point for new knowledge ingestion.

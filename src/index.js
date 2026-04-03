@@ -21,13 +21,29 @@ import BeSearch from './besearch/index.js'
 import ContextHelp from './context/contextHelper.js'
 import HopDML from 'hop-dml'
 
+// Brain imports
+import { altruismHandler } from './brain/altruismHandler.js'
+import { catalystProfiles } from './brain/catalystProfiles.js'
+import { metabolicValve } from './brain/metabolicValve.js'
+import { metobolicGovernor } from './brain/metobolicGovernor.js'
+import { patterAgent } from './brain/patterAgent.js'
+import { TrinityManager } from './brain/trinityManager.js'
+import { initializeContext } from './brain/context.js'
+
+// Skill imports
+import { RDFNavigator } from './skills/RDFmapper.js'
+import { DataMapper } from './skills/dataMapper.js'
+import { LexiconHarvester } from './skills/lexiconHarvester.js'
+import { networkQuery } from './skills/networkQuery.js'
+import { teach } from './skills/teach.js'
+
 class BbAI extends EventEmitter {
 
   constructor(contextAgent) {
     super()
     this.hello = 'beebee-AI--{{hello}}'
     this.publicLibrary = {}
-    this.dataNetworkLive = contextAgent
+    this.contextAgent = contextAgent
     this.beebeeAgent = new BeebeeAgent();
     this.queryBuilder = new HopQuerybuider()
     this.beSearch = new BeSearch()
@@ -37,6 +53,32 @@ class BbAI extends EventEmitter {
     this.peerQ = ''
     this.currentTask = null
     this.contextHelper = new ContextHelp()
+
+    // Pass this.contextAgent into context.js
+    initializeContext(this.contextAgent.safeflow)
+
+    // Expose Brain
+    this.brain = {
+      altruismHandler,
+      catalystProfiles,
+      metabolicValve,
+      metobolicGovernor,
+      patterAgent,
+      trinityManager: TrinityManager
+    }
+
+    // Expose Skills
+    this.skills = {
+      rdfNavigator: RDFNavigator,
+      dataMapper: DataMapper,
+      lexiconHarvester: LexiconHarvester,
+      networkQuery,
+      teach
+    }
+
+    // Pass contextAgent to LexiconHarvester
+    this.skills.lexiconHarvester.init(this.contextAgent);
+
     this.gatherAI()
     this.listenToHOP()
     this.listenBeeBeeAgent()
@@ -159,6 +201,20 @@ class BbAI extends EventEmitter {
     if (inFlow.data.session === true) {
       this.beebeeAgent.beebee.startNewChatSession(inFlow.bbid, MASTER_PROMPT)
     }
+
+    // Check for skill routing (e.g., skill: rdf)
+    if (inFlow.data.content && (inFlow.data.content.includes('skill: rdf') || inFlow.data.content.includes('skill - rdf'))) {
+      const rdfMatch = inFlow.data.content.match(/(?:https?:\/\/|www\.)[^\s]+\.ttl/i) || inFlow.data.content.match(/(?:https?:\/\/|www\.)[^\s]+/i);
+      if (rdfMatch) {
+         await this.handleSkillRequest({
+           skill: 'rdf',
+           params: { rdfUrl: rdfMatch[0], subjectUri: inFlow.data.subjectUri || null },
+           bbid: inFlow.bbid
+         });
+         return;
+      }
+    }
+
     // take quick look with beebee own bentoboxDS NLP skills
     let firstReview = await this.contextHelper.inputLanuage(inFlow.data.content, inFlow)
     // beebee has to decide on best info gathering paths.
@@ -226,6 +282,41 @@ class BbAI extends EventEmitter {
   }
 
   /**
+   * Handle specific skill requests and route results to brain components
+   * @method handleSkillRequest
+   */
+  handleSkillRequest = async function (message) {
+    const { skill, params, bbid } = message;
+    console.log(`[BbAI] Handling skill request: ${skill}`);
+    
+    let result;
+    if (skill === 'rdf') {
+      result = await this.skills.rdfNavigator.fetchDBpediaLayer(params.rdfUrl, params.subjectUri);
+      
+      // Route to resonAgent (Brain)
+      console.log(`[BbAI] Routing RDF results to TrinityManager`);
+      const agents = await this.brain.trinityManager.ignite({
+        lexicon: result,
+        biometrics: {},
+        history: []
+      });
+
+      // Emit response back to network/UI
+      this.emit('beebee-response', {
+        type: 'bbai-reply',
+        action: 'skill-complete',
+        task: 'rdf-extraction',
+        bbid: bbid,
+        data: {
+          skill: 'rdf',
+          result: result,
+          agents: Object.keys(agents)
+        }
+      });
+    }
+  }
+
+  /**
   *
   * @method  serializeJSobject
   */
@@ -275,25 +366,6 @@ class BbAI extends EventEmitter {
   *
   */
   listenAssessedResponse = async function () {
-    // this.contextHelper.on('assessed-response', async (bbResponseCategory, bbox) => {
-      // did the LLM provide numbers to chart, extract date information from questions etc.?
-      // save to hyperdrive
-      /*
-      let blindFileName
-      if (bbResponseCategory.type !== 'agent-response' && bbResponseCategory.type !== undefined && bbResponseCategory.type !== 'hello' && bbResponseCategory.type !== 'upload' && bbResponseCategory.type !== 'library' && bbResponseCategory.type !== 'library-open') {
-        blindFileName = 'blindt' + bbox
-        await this.nxtLibrary.liveHolepunch.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(bbResponseCategory.data.sequence))
-      }
-      await this.outflowPrepare(bbResponseCategory, bbox, blindFileName)
-      */
-    // })
-    // file upload
-    /* 
-    this.on('assessed-response', async (bbResponseCategory, bbox, blindFileName) => {
-      // did the LLM provide numbers to chart, extract date information from questions etc.?
-      await this.outflowPrepare(bbResponseCategory, bbox, blindFileName)
-    })
-    */
     // assess all part of beebee reply and pass on streaming output back to bentoboxds
     this.on('beebee-pre-response', (token) => {
       // look for consider reply part of stream
@@ -352,20 +424,7 @@ class BbAI extends EventEmitter {
       if (bbResponseCategory.data.sequence.status !== true) {
         outFlow.data = bbResponseCategory.sequence.data
       } else {
-        // need to  assume question, data, compute and vis contracts need form if from NLP first time.
-        /*let hqbHolder = {}
-        hqbHolder.action = 'blind'
-        hqbHolder.data = bbResponseCategory
-        // first check public library is present if not ask for it again
-        let setAlready = Object.keys(this.publicLibrary)
-        if (setAlready.length === 0) {
-          await this.listenHolepunchLive()
-          let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
-          outFlow.data = safeFlowQuery
-        } else {
-          let safeFlowQuery = this.queryBuilder.queryPath(hqbHolder, this.publicLibrary, blindFileName)
-          outFlow.data = safeFlowQuery
-        } */
+        // ...
       }
     } else if (bbResponseCategory.type === 'upload') {
       outFlow.type = 'upload'
