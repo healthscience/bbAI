@@ -11,10 +11,8 @@
 */
 import util from 'util'
 import EventEmitter from 'events'
-import { MASTER_PROMPT, TASK_PROMPTS } from "./beebeeAgent/prompts.js";
-import { processResponse, StreamFilter } from "./beebeeAgent/handler.js";
-import BeebeeAgent from './beebeeAgent/beebeeLearn.js'
-import AgentNetwork from './agents/networkAgents.js'
+import HopLearn from 'hop-learn'
+// import AgentNetwork from './agents/networkAgents.js'
 import BlindData from './data/blindData.js'
 import HopQuerybuider from 'hop-query-builder'
 import BeSearch from './besearch/index.js'
@@ -22,11 +20,12 @@ import ContextHelp from './context/contextHelper.js'
 import HopDML from 'hop-dml'
 
 // Brain imports
-import { altruismHandler } from './brain/altruismHandler.js'
-import { catalystProfiles } from './brain/catalystProfiles.js'
-import { metabolicValve } from './brain/metabolicValve.js'
-import { metobolicGovernor } from './brain/metobolicGovernor.js'
-import { patterAgent } from './brain/patterAgent.js'
+import { initializeMemory, Memory } from './brain/memory.js'
+import { AltruismHandler } from './brain/altruismHandler.js'
+import { CatalystProfiles } from './brain/catalystProfiles.js'
+import { MetabolicValve } from './brain/metabolicValve.js'
+import { MetabolicGovernor } from './brain/metobolicGovernor.js'
+import { PatternAgent } from './brain/patternAgent.js'
 import { TrinityManager } from './brain/trinityManager.js'
 import { initializeContext } from './brain/context.js'
 
@@ -34,8 +33,8 @@ import { initializeContext } from './brain/context.js'
 import { RDFNavigator } from './skills/RDFmapper.js'
 import { DataMapper } from './skills/dataMapper.js'
 import { LexiconHarvester } from './skills/lexiconHarvester.js'
-import { networkQuery } from './skills/networkQuery.js'
-import { teach } from './skills/teach.js'
+// import { NetworkQuery } from './skills/networkQuery.js'
+import { Teach } from './skills/teach.js'
 
 class BbAI extends EventEmitter {
 
@@ -44,10 +43,10 @@ class BbAI extends EventEmitter {
     this.hello = 'beebee-AI--{{hello}}'
     this.publicLibrary = {}
     this.contextAgent = contextAgent
-    this.beebeeAgent = new BeebeeAgent();
+    this.lifeLearn = new HopLearn()
     this.queryBuilder = new HopQuerybuider()
     this.beSearch = new BeSearch()
-    this.agentsCMP = new AgentNetwork()
+    // this.agentsCMP = new AgentNetwork()
     this.blindData = new BlindData({})
     this.hopDML = new HopDML({})
     this.peerQ = ''
@@ -56,14 +55,16 @@ class BbAI extends EventEmitter {
 
     // Pass this.contextAgent into context.js
     initializeContext(this.contextAgent.safeflow)
+    initializeMemory(this.contextAgent.network)
 
     // Expose Brain
     this.brain = {
-      altruismHandler,
-      catalystProfiles,
-      metabolicValve,
-      metobolicGovernor,
-      patterAgent,
+      Memory,
+      AltruismHandler,
+      CatalystProfiles,
+      MetabolicValve,
+      MetabolicGovernor,
+      PatternAgent,
       trinityManager: TrinityManager
     }
 
@@ -72,8 +73,8 @@ class BbAI extends EventEmitter {
       rdfNavigator: RDFNavigator,
       dataMapper: DataMapper,
       lexiconHarvester: LexiconHarvester,
-      networkQuery,
-      teach
+      // NetworkQuery,
+      Teach
     }
 
     // Pass contextAgent to LexiconHarvester
@@ -81,7 +82,6 @@ class BbAI extends EventEmitter {
 
     this.gatherAI()
     this.listenToHOP()
-    this.listenBeeBeeAgent()
     this.listenAssessedResponse()
     this.listenOracle()
   }
@@ -92,22 +92,19 @@ class BbAI extends EventEmitter {
   *
   */
   listenHolepunchLive = async function () {
-    console.log('beebee-AI--{{listenHolepunchLive}}')
     this.publicLibrary = {} // await this.libraryRefContracts()
-    console.log('public library any contracgs?')
-    console.log(this.publicLibrary.length)
     // ask the oracle if anything to bring to attention
     await this.beSearch.listenOracles()
   }
 
   /**
-  * bring AI's to be
-  * @method gatherAI
+  * path to old world
+  * @method oldWorldPath
   *
   */
-  gatherAI = function () {
-    this.contextHelper.setHopLearn(this.agentsCMP.hopLearn)
-    this.agentsCMP.setHopLearn()
+  oldWorldPath = function () {
+    // this.contextHelper.setHopLearn(this.agentsCMP.hopLearn)
+    // this.agentsCMP.setHopLearn()
   }
 
   /**
@@ -132,89 +129,16 @@ class BbAI extends EventEmitter {
     })
   }
 
-
   /**
-  * listen to beebee agent
-  * @method listenBeeBeeAgent
-  *
-  */
-  listenBeeBeeAgent = function () {
-    let streamFilter = new StreamFilter();
-
-    this.beebeeAgent.on('beebee-agent-reply', async (data) => {
-      if (data.type === 'response_complete') {
-        // inform bentobox of complete reply and save in chat history via BentoBoxDS
-
-        let processed;
-        if (this.currentTask === 'LENS_EXTRACTION') {
-           try {
-             // The data.data is the full response from the model
-             const rawText = data.data || '';
-             const parsed = JSON.parse(rawText.trim());
-             processed = [{
-               type: 'lens-extraction',
-               lens: parsed
-             }];
-           } catch (e) {
-             console.error('Failed to parse grammar response:', e);
-             processed = [{ type: 'chat-reply', text: data.data }, { type: 'lens-extraction', lens: { state: 'Neutral' } }];
-           }
-           this.currentTask = null;
-        } else {
-           // Process the response using the new handler
-           processed = await processResponse(data || data.response || data.data || '', this.peerQ);
-        }
-        
-        // Emit each processed message separately
-        processed.forEach(msg => {
-          let outFlow = {
-            type: 'bbai-reply',
-            action: 'npl-reply',
-            task: msg.type,
-            bbid: data.bbid,
-            query: false,
-            data: msg
-          };
-          this.emit('beebee-response', outFlow);
-        });
-
-        // Reset stream filter for next turn
-        streamFilter = new StreamFilter();
-
-      } else if (data.type === 'token') {
-        // pass on to assessment and then allow streaming part back to bentoboxds
-        const cleanToken = streamFilter.process(data.data || '');
-        if (cleanToken) {
-          this.emit('beebee-pre-response', { ...data, data: cleanToken });
-        }
-      }
-    })
-  }
-
-  /**
-  * NLP conversation with beebee who will then coordinate with other peers or tiny agents to give best response back to peer via BentoBoxDS
-  * @method nlpflow
+  * beebee learning patterns
+  * @method beebeeFlow
   *
   */
   beebeeFlow = async function (inFlow) {
-    // does a new chat session need start and or chat history added?
-    if (inFlow.data.session === true) {
-      this.beebeeAgent.beebee.startNewChatSession(inFlow.bbid, MASTER_PROMPT)
-    }
-
-    // Check for skill routing (e.g., skill: rdf)
-    if (inFlow.data.content && (inFlow.data.content.includes('skill: rdf') || inFlow.data.content.includes('skill - rdf'))) {
-      const rdfMatch = inFlow.data.content.match(/(?:https?:\/\/|www\.)[^\s]+\.ttl/i) || inFlow.data.content.match(/(?:https?:\/\/|www\.)[^\s]+/i);
-      if (rdfMatch) {
-         await this.handleSkillRequest({
-           skill: 'rdf',
-           params: { rdfUrl: rdfMatch[0], subjectUri: inFlow.data.subjectUri || null },
-           bbid: inFlow.bbid
-         });
-         return;
-      }
-    }
-
+    // map life-strap story and further peer conversations and map to lifePatterns
+    let lifeSnapPatterns = this.lifeLearn.lifeFlow(inFlow, 'life-strap-first')
+    console.log('lifePattern operational')
+    console.log(lifeSnapPatterns)
     // take quick look with beebee own bentoboxDS NLP skills
     let firstReview = await this.contextHelper.inputLanuage(inFlow.data.content, inFlow)
     // beebee has to decide on best info gathering paths.
@@ -252,33 +176,7 @@ class BbAI extends EventEmitter {
       }
     }
 
-    // check if a HOPquery is ready for SafeFlow-ECS?
-    if (dataBlindOptions === false && firstReview.bentobox === true && uploadTools === false) {
-      // save the squency data to a blind file
-      let blindFileName = 'blindt' + inFlow.bbid
-      console.log('holepuch')
-      await this.dataNetworkLive.DriveFiles.hyperdriveJSONsaveBlind(blindFileName, JSON.stringify(firstReview.data.sequence))
-      let queryData = await this.HOPqueryDataPrep(inFlow.data.content, firstReview.data, inFlow.bbid)
-      this.emit('beebee-response', queryData)
-    } else if (dataBlindOptions === false && firstReview.bentobox === true && uploadTools === true)  {
-      // data file already saved on upload, identify by name and file type and blind prefix
-      let queryData = await this.HOPqueryDataPrep(inFlow.data.content, firstReview.data, inFlow.bbid)
-      this.emit('beebee-response', queryData)
-    }
-    if (inFlow.data.context === 'extraction') {
-      // Step 2: Extraction
-      this.currentTask = 'LENS_EXTRACTION';
-      const extractionPrompt = `${MASTER_PROMPT}\n${TASK_PROMPTS.CONTEXT_EXTRACTION}\n\nInput: "${inFlow.data.content}"`;
-      await this.beebeeMain(extractionPrompt, inFlow.bbid, {
-        grammar: 'lens',
-        temperature: 0.2,
-        maxTokens: 128
-      });
-    } else {
-      // pull together all parts and ask beebeee to build response
-      this.currentTask = 'PEER_REPLY';
-      await this.beebeeMain(inFlow.data.content, inFlow.bbid);
-    }
+
   }
 
   /**
@@ -315,6 +213,8 @@ class BbAI extends EventEmitter {
       });
     }
   }
+
+
 
   /**
   *
@@ -560,31 +460,9 @@ class BbAI extends EventEmitter {
     return outFlow
   }
 
-  /**
-  *  bring TINY LLM to be
-  * @method startBeeBee
-  *
-  */
-  startBeeBee = async function () {
-    await this.beebeeAgent.initialize();
-  }
 
-  /**
-  *  call beebee tiny llm
-  * @method beebeeMain
-  *
-  */
-  beebeeMain = async function (promptIN, bboxID, options = {}) {
-    // Simulate receiving messages from BentoBoxD
-    await this.beebeeAgent.handleBentoBoxMessage({
-      type: 'prompt_stream',
-      prompt: promptIN,
-      options: options
-    }, bboxID);
-    
-    // Clean up
-    // await this.beebeeAgent.dispose();  clean up at end of bentoboxDS use?
-  }
+
+
 
 }
 

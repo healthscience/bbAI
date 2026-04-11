@@ -11,33 +11,33 @@
 */
 import util from 'util'
 import EventEmitter from 'events'
-import HopLearn from 'hop-learn'
+// import BestGuess from 'best-guess'
 // two CMP  iinc health for medical open source LLM,  Perplexity for products (try find open source), open source Mistral and others that fit open source use non llm techniques, allen inst. Sutton
 
 class AgentHelper extends EventEmitter {
 
   constructor() {
     super()
-    this.hopLearn = new HopLearn()
+    this.BestGuess = new BestGuess()
   }
 
   /**
   * set hop learn in context
-  * @method setHopLearn
+  * @method setBestGuess
   *
   */
-  setHopLearn() {
-    // this.listenHOPlearn()
+  setBestGuess() {
+    // this.listenBestGuess()
     this.outflowEmbedding()
   }
 
   /**
-  * listen to HOP-Learn
-  * @method listenHopLearn
+  * listen to  old world
+  * @method listenBestGuess
   *
   */
-  listenHopLearn = function () {
-    this.hopLearn.on('hop-learn', (data) => {
+  listenBestGuess = function () {
+    this.BestGuess.on('hop-learn', (data) => {
       // let beebee check for other info to combine or send back to peer via HOP
       if (data.action === 'cale-gpt4all') {
         this.emit('peer-bb-direct', data)
@@ -58,7 +58,7 @@ class AgentHelper extends EventEmitter {
       }
     })
 
-    this.hopLearn.on('hop-learn-models', (data) => {
+    this.BestGuess.on('hop-learn-models', (data) => {
       let outFlow = {}
       outFlow.type = data.type
       outFlow.action = data.action
@@ -77,7 +77,7 @@ class AgentHelper extends EventEmitter {
   *
   */
   outflowEmbedding = function () {
-    this.hopLearn.on('hop-learn-embedded', (data) => {
+    this.BestGuess.on('hop-learn-embedded', (data) => {
       let outFlow = {}
       outFlow.type = 'agent-response'
       outFlow.text = 'Data has been embedded.'
@@ -93,7 +93,7 @@ class AgentHelper extends EventEmitter {
   *
   */
   beginAgents = async function (task) {
-    await this.hopLearn.openAgent(task)
+    await this.BestGuess.openAgent(task)
   }
 
   /**
@@ -102,7 +102,7 @@ class AgentHelper extends EventEmitter {
   *
   */
   stopAgents = function (task) {
-    this.hopLearn.closeOrchestra(task)
+    this.BestGuess.closeOrchestra(task)
   }
   
   /**
@@ -112,7 +112,7 @@ class AgentHelper extends EventEmitter {
   */
   coordinationAgents = async function (message) {
     // setup, data, compute, predict, evalute, repeat, automate ... .. 
-    this.hopLearn.coordinateAgents(message)
+    this.BestGuess.coordinateAgents(message)
   }
 
 }

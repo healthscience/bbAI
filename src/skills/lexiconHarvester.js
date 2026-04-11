@@ -3,16 +3,15 @@
  * Role: Converts Multimodal Sources into Language Weights (W_lang).
  * Sources: Research Papers, Transcripts, Tweets, Biomarker Specs.
  */
-
-import { Hyperdrive } from '../persistence/hyper-drive.js';
 import { Memory } from '../brain/memory.js';
 
 export const LexiconHarvester = {
   name: "lexicon_harvester",
+
   contextAgent: null,
 
   init(contextAgent) {
-    this.contextAgent = contextAgent;
+    this.contextAgent = contextAgent.network;
   },
 
   /**
@@ -24,7 +23,7 @@ export const LexiconHarvester = {
     console.log(`[Bee] Harvesting Lexicon from ${sourceType}: ${sourceUri}`);
     
     // 1. RAW EXTRACTION: Pull the bytes
-    const rawData = await Hyperdrive.readFile(sourceUri);
+    const rawData = await this.contextAgent.Drive.readFile(sourceUri);
     
     // 2. CLEANING: Remove noise (ads, timestamps, tweet metadata)
     const cleanText = this.sanitize(rawData, sourceType);

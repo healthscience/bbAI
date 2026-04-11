@@ -3,7 +3,7 @@
  * Manages the "Medicine" feel by balancing Space (Memory) vs Time (CPU).
  */
 
-const CatalystProfiles = {
+export const CatalystProfiles = {
   // Performance: Trading Space for Time
   performance: {
     label: "400IM_SPRINT",

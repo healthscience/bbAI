@@ -5,7 +5,7 @@
  * Reference: MIT CSAIL "Space vs Time" (Catalytic Space) & Von Mises Geometry.
  */
 
-const MetabolicGovernor = {
+export const MetabolicGovernor = {
   // Profiles for different Peer activity states
   POLICIES: {
     SPRINT:  { energy: 'MAX', data: 'HIGH_RES', compute: 'TICK_SYNC', tmto: 'PRE_COMPUTE' },
