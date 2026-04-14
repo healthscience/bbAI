@@ -11,7 +11,6 @@ let currentHolepunch = {};
  */
 export const initializeMemory = (agent) => {
   currentHolepunch = agent;
-  console.log('[Bee] Context initialized with contextAgent');
 };
 
 

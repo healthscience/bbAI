@@ -8,10 +8,10 @@ import { Memory } from '../brain/memory.js';
 export const LexiconHarvester = {
   name: "lexicon_harvester",
 
-  contextAgent: null,
+  liveDataNetwork: null,
 
-  init(contextAgent) {
-    this.contextAgent = contextAgent.network;
+  init(liveDataNetwork) {
+    this.liveDataNetwork = liveDataNetwork;
   },
 
   /**
@@ -23,7 +23,7 @@ export const LexiconHarvester = {
     console.log(`[Bee] Harvesting Lexicon from ${sourceType}: ${sourceUri}`);
     
     // 1. RAW EXTRACTION: Pull the bytes
-    const rawData = await this.contextAgent.Drive.readFile(sourceUri);
+    const rawData = await this.liveDataNetwork.Drive.readFile(sourceUri);
     
     // 2. CLEANING: Remove noise (ads, timestamps, tweet metadata)
     const cleanText = this.sanitize(rawData, sourceType);

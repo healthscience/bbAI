@@ -12,7 +12,6 @@
 import util from 'util'
 import EventEmitter from 'events'
 import HopLearn from 'hop-learn'
-// import AgentNetwork from './agents/networkAgents.js'
 import BlindData from './data/blindData.js'
 import HopQuerybuider from 'hop-query-builder'
 import BeSearch from './besearch/index.js'
@@ -42,8 +41,8 @@ class BbAI extends EventEmitter {
     super()
     this.hello = 'beebee-AI--{{hello}}'
     this.publicLibrary = {}
-    this.contextAgent = contextAgent
-    this.lifeLearn = new HopLearn()
+    this.context = contextAgent
+    this.liveLearn = new HopLearn()
     this.queryBuilder = new HopQuerybuider()
     this.beSearch = new BeSearch()
     // this.agentsCMP = new AgentNetwork()
@@ -54,8 +53,8 @@ class BbAI extends EventEmitter {
     this.contextHelper = new ContextHelp()
 
     // Pass this.contextAgent into context.js
-    initializeContext(this.contextAgent.safeflow)
-    initializeMemory(this.contextAgent.network)
+    initializeContext(this.context.safeflow)
+    initializeMemory(this.context.network)
 
     // Expose Brain
     this.brain = {
@@ -78,13 +77,64 @@ class BbAI extends EventEmitter {
     }
 
     // Pass contextAgent to LexiconHarvester
-    this.skills.lexiconHarvester.init(this.contextAgent);
+    this.skills.lexiconHarvester.init(this.context.network);
 
-    this.gatherAI()
+    // start listeners
     this.listenToHOP()
     this.listenAssessedResponse()
     this.listenOracle()
   }
+
+  /**
+   * 
+   * @method bringToBe
+   * 
+  */
+  bringToBe = function (bePulse, lsStory) {
+    // beebee  bring to be a lifestrap
+    console.log('new lifestrap  interplay with  resonAgents commences')
+    console.log('----------------')
+    if (bePulse !== 'awake') {
+      console.log('lifestrap bring to be---awake----')
+      // life-straps
+      console.log('life-strap story')
+      console.log(lsStory)
+      // memory cues  network experiments(bentobox(s), reference contracts q, datatype, packing, compute, visualization)
+      // form query to hypberbees using 
+      let contractCatgory = ['cue', 'datatype', 'compute', 'packaging']
+      for (let catC of contractCatgory) {
+
+      }
+      // bring resonAgents to be
+      this.context.resonagents.birthAgent(lsStory.key, 'shadow');
+      
+      // bring neat-hop to be
+
+
+      // bring interplay life & bento templates
+      let patternMatch = this.liveLearn.lifeFlow(lsStory.value.concept.story, 'HomeoRange')
+      console.log(patternMatch)
+      // memory of dialogue conversations
+      // same key for conversation ie chat
+
+      // SafeFlow-ECS  set the data pulse into motion
+
+
+      // consilience-weave
+
+      // besearch cycles - heli time triggered
+      
+
+    } else {
+      console.log('star awaken -- bring memory of life-straps back to be')
+      // memory of life-straps
+      let lifeStrapbe = {}
+      lifeStrapbe.type = 'bentoboxds'
+      lifeStrapbe.action = 'lifestrap-start'
+      this.context.library.bentoPathOperations(lifeStrapbe)
+    } 
+    
+  } 
 
   /**
   * listener for Holepunch hypercore live and activve

@@ -1,6 +1,6 @@
 {
   "name": "beebee-ai",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "beebee toolkit helper",
   "main": "src/index.js",
   "type": "module",
