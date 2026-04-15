@@ -93,26 +93,37 @@ class BbAI extends EventEmitter {
     // beebee  bring to be a lifestrap
     console.log('new lifestrap  interplay with  resonAgents commences')
     console.log('----------------')
+
     if (bePulse !== 'awake') {
       console.log('lifestrap bring to be---awake----')
+      // 1. Birth the Language Agent
+      const langAgent = await this.wiring.resonagents.birthAgent(lsStory.key, 'language');
+
+      // 2. Feed the Raw Story (Preparation)
+      // We pack the string into a Buffer or a standardized token array
+      const rawWords = lsStory.value.concept.story;
+      // Feed 1: The Raw Story Words (The Intent)
+      this.wiring.resonagents.feed(lsStory.key, 'language', rawWords);
+
+
       // life-straps
-      console.log(lsStory)
       // memory cues  network experiments(bentobox(s), reference contracts q, datatype, packing, compute, visualization)
       // form query to hypberbees using 
-      let contractCatgory = ['cue', 'datatype', 'compute', 'packaging']
+      /* let contractCatgory = ['cue', 'datatype', 'compute', 'packaging']
       for (let catC of contractCatgory) {
 
-      }
-      // bring resonAgents to be
-      this.wiring.resonagents.birthAgent(lsStory.key, 'shadow');
+      } */
       
       // bring neat-hop to be
 
       // from memory saved
       if (bePulse === 'genesis') {
-        // bring interplay life & bento templates
-        let patternMatch = this.liveLearn.lifeFlow(lsStory.value.concept.story, 'HomeoRange')
-        console.log(patternMatch)
+        let patternMatch = this.liveLearn.lifeFlow(rawWords, 'HomeoRange');
+        
+        // 3. Feed the Pattern Structure (Preparation)
+        // We don't send the whole JSON; we send the 'Slots' and 'Resonance'
+        // Feed 2: The Structured Pattern (from hop-learn)
+        this.wiring.resonagents.feed(lsStory.key, 'language', patternMatch);
         // memory of dialogue conversations
         // same key for conversation ie chat
 
@@ -127,6 +138,7 @@ class BbAI extends EventEmitter {
       }
 
     } else {
+      console.log('start path-----lifestrap')
       // memory of life-straps
       let lifeStrapbe = {}
       lifeStrapbe.type = 'bentoboxds'
