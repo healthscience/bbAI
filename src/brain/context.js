@@ -7,23 +7,23 @@ let currentContext = {
   constraint: 'idle',
   eValue: 0.1, // Metabolic Energy Usage (0.0 to 1.0)
   intent: 'waiting',
-  contextAgent: null
+  wiring: null
 };
 
 /**
- * Initializes the context with the global contextAgent (Holepunch/HOP network)
+ * Initializes the context with the global wiring (Holepunch/HOP network)
  */
-export const initializeContext = (agent) => {
-  currentContext.contextAgent = agent;
-  console.log('[Bee] Context initialized with contextAgent');
+export const initializeContext = (wiringIn) => {
+  currentContext.wiring = wiringIn;
+  console.log('[Bee] Context initialized with wiring');
 };
 
 export const getContext = () => {
   // 1. Sync with the Life-Strap (safeFLOW)
   // If heart rate is high and motion is rhythmic, infer "High Intensity"
   
-  // Use initialized contextAgent if available, otherwise fallback to safeFLOW import
-  const provider = currentContext.contextAgent;
+  // Use initialized wiring if available, otherwise fallback to safeFLOW import
+  const provider = currentContext.wiring;
   const biomarkers = provider.getLatest ? provider.getLatest() : { heartRate: 0 };
   
   if (biomarkers.heartRate > 140) {

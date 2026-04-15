@@ -32,16 +32,15 @@ import { initializeContext } from './brain/context.js'
 import { RDFNavigator } from './skills/RDFmapper.js'
 import { DataMapper } from './skills/dataMapper.js'
 import { LexiconHarvester } from './skills/lexiconHarvester.js'
-// import { NetworkQuery } from './skills/networkQuery.js'
 import { Teach } from './skills/teach.js'
 
 class BbAI extends EventEmitter {
 
-  constructor(contextAgent) {
+  constructor(wiringIn) {
     super()
     this.hello = 'beebee-AI--{{hello}}'
     this.publicLibrary = {}
-    this.context = contextAgent
+    this.wiring = wiringIn
     this.liveLearn = new HopLearn()
     this.queryBuilder = new HopQuerybuider()
     this.beSearch = new BeSearch()
@@ -52,9 +51,9 @@ class BbAI extends EventEmitter {
     this.currentTask = null
     this.contextHelper = new ContextHelp()
 
-    // Pass this.contextAgent into context.js
-    initializeContext(this.context.safeflow)
-    initializeMemory(this.context.network)
+    // Pass this.wiringAgent into context.js
+    initializeContext(this.wiring.safeflow)
+    initializeMemory(this.wiring.network)
 
     // Expose Brain
     this.brain = {
@@ -77,7 +76,7 @@ class BbAI extends EventEmitter {
     }
 
     // Pass contextAgent to LexiconHarvester
-    this.skills.lexiconHarvester.init(this.context.network);
+    this.skills.lexiconHarvester.init(this.wiring.network);
 
     // start listeners
     this.listenToHOP()
@@ -90,14 +89,13 @@ class BbAI extends EventEmitter {
    * @method bringToBe
    * 
   */
-  bringToBe = function (bePulse, lsStory) {
+  bringToBe = async function (bePulse, lsStory) {
     // beebee  bring to be a lifestrap
     console.log('new lifestrap  interplay with  resonAgents commences')
     console.log('----------------')
     if (bePulse !== 'awake') {
       console.log('lifestrap bring to be---awake----')
       // life-straps
-      console.log('life-strap story')
       console.log(lsStory)
       // memory cues  network experiments(bentobox(s), reference contracts q, datatype, packing, compute, visualization)
       // form query to hypberbees using 
@@ -106,32 +104,34 @@ class BbAI extends EventEmitter {
 
       }
       // bring resonAgents to be
-      this.context.resonagents.birthAgent(lsStory.key, 'shadow');
+      this.wiring.resonagents.birthAgent(lsStory.key, 'shadow');
       
       // bring neat-hop to be
 
+      // from memory saved
+      if (bePulse === 'genesis') {
+        // bring interplay life & bento templates
+        let patternMatch = this.liveLearn.lifeFlow(lsStory.value.concept.story, 'HomeoRange')
+        console.log(patternMatch)
+        // memory of dialogue conversations
+        // same key for conversation ie chat
 
-      // bring interplay life & bento templates
-      let patternMatch = this.liveLearn.lifeFlow(lsStory.value.concept.story, 'HomeoRange')
-      console.log(patternMatch)
-      // memory of dialogue conversations
-      // same key for conversation ie chat
-
-      // SafeFlow-ECS  set the data pulse into motion
+        // SafeFlow-ECS  set the data pulse into motion
 
 
-      // consilience-weave
+        // consilience-weave
 
-      // besearch cycles - heli time triggered
-      
+        // besearch cycles - heli time triggered
+      } else {
+        // feedback safeflow with saved data and setup data pulse for entity
+      }
 
     } else {
-      console.log('star awaken -- bring memory of life-straps back to be')
       // memory of life-straps
       let lifeStrapbe = {}
       lifeStrapbe.type = 'bentoboxds'
       lifeStrapbe.action = 'lifestrap-start'
-      this.context.library.bentoPathOperations(lifeStrapbe)
+      this.wiring.library.libManager.bentoPathOperations(lifeStrapbe)
     } 
     
   } 
