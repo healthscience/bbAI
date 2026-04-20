@@ -96,14 +96,17 @@ class BbAI extends EventEmitter {
 
     if (bePulse !== 'awake') {
       console.log('lifestrap bring to be---awake----')
+      // Ensure we have a valid key
+      const agentKey = lsStory.key || 'default-agent';
+      
       // 1. Birth the Language Agent
-      const langAgent = await this.wiring.resonagents.birthAgent(lsStory.key, 'language');
+      const langAgent = await this.wiring.resonagents.birthAgent(agentKey, 'language');
 
       // 2. Feed the Raw Story (Preparation)
       // We pack the string into a Buffer or a standardized token array
-      const rawWords = lsStory.value.concept.story;
+      const rawWords = lsStory.value?.concept?.story || lsStory.value || '';
       // Feed 1: The Raw Story Words (The Intent)
-      this.wiring.resonagents.feed(lsStory.key, 'language', rawWords);
+      this.wiring.resonagents.feed(agentKey, 'language', rawWords);
 
 
       // life-straps
@@ -119,7 +122,8 @@ class BbAI extends EventEmitter {
       // from memory saved
       if (bePulse === 'genesis') {
         let patternMatch = this.liveLearn.lifeFlow(rawWords, 'HomeoRange');
-        
+        this.prepareLifestrapLens(lsStory.key, patternMatch)
+
         // 3. Feed the Pattern Structure (Preparation)
         // We don't send the whole JSON; we send the 'Slots' and 'Resonance'
         // Feed 2: The Structured Pattern (from hop-learn)
@@ -146,7 +150,20 @@ class BbAI extends EventEmitter {
       this.wiring.library.libManager.bentoPathOperations(lifeStrapbe)
     } 
     
-  } 
+  }
+
+  /**
+   * 
+   * @method prepareLifestrapLens
+  */
+   prepareLifestrapLens = function (lsKey, pattern) {
+      let Lens = {}
+      Lens.capacity = [],
+      Lens.context = pattern,
+      Lens.coherence = []
+      Lens.key = lsKey
+      this.emit('ls-pattern', Lens)
+   }
 
   /**
   * listener for Holepunch hypercore live and activve
