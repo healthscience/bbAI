@@ -122,12 +122,12 @@ class BbAI extends EventEmitter {
       // from memory saved
       if (bePulse === 'genesis') {
         let patternMatch = this.liveLearn.lifeFlow(rawWords, 'HomeoRange');
-        this.prepareLifestrapLens(lsStory.key, patternMatch)
+        await this.prepareLifestrapLens(agentKey, patternMatch)
 
         // 3. Feed the Pattern Structure (Preparation)
         // We don't send the whole JSON; we send the 'Slots' and 'Resonance'
         // Feed 2: The Structured Pattern (from hop-learn)
-        this.wiring.resonagents.feed(lsStory.key, 'language', patternMatch);
+        this.wiring.resonagents.feed(agentKey, 'language', patternMatch);
         // memory of dialogue conversations
         // same key for conversation ie chat
 
@@ -156,13 +156,15 @@ class BbAI extends EventEmitter {
    * 
    * @method prepareLifestrapLens
   */
-   prepareLifestrapLens = function (lsKey, pattern) {
-      let Lens = {}
+   prepareLifestrapLens = async function (lsKey, pattern) {
+      // save lensglue to hyperbee
+       let Lens = {}
       Lens.capacity = [],
       Lens.context = pattern,
       Lens.coherence = []
       Lens.key = lsKey
-      this.emit('ls-pattern', Lens)
+      let lensglueContract =  await this.wiring.library.libManager.lensGlue.saveLensglueProtocol(lsKey, Lens)
+      this.emit('ls-pattern', lensglueContract)
    }
 
   /**
