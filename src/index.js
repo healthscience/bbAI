@@ -217,7 +217,7 @@ class BbAI extends EventEmitter {
   */
   beebeeFlow = async function (inFlow) {
     // map life-strap story and further peer conversations and map to lifePatterns
-    let lifeSnapPatterns = this.lifeLearn.lifeFlow(inFlow, 'life-strap-first')
+    let lifeSnapPatterns = this.liveLearn.lifeFlow(inFlow, 'life-strap-first')
     console.log('lifePattern operational')
     console.log(lifeSnapPatterns)
     // take quick look with beebee own bentoboxDS NLP skills
