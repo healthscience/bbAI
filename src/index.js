@@ -11,6 +11,7 @@
 */
 import util from 'util'
 import EventEmitter from 'events'
+import { TraceLoom } from './loom/traceLoom.js'
 import HopLearn from 'hop-learn'
 import BlindData from './data/blindData.js'
 import HopQuerybuider from 'hop-query-builder'
@@ -91,11 +92,13 @@ class BbAI extends EventEmitter {
   */
   bringToBe = async function (bePulse, lsStory) {
     // beebee  bring to be a lifestrap
-    console.log('new lifestrap  interplay with  resonAgents commences')
-    console.log('----------------')
-
     if (bePulse !== 'awake') {
-      console.log('lifestrap bring to be---awake----')
+       // what task is ask?
+      if (bePulse === 'loom') {
+        let keyBuffer = new Uint8Array(Buffer.from(lsStory.contract_key, 'hex'))
+        let fullLoom = await this.loomData(keyBuffer)
+        this.emit('ls-whole-loom', lsStory.contract_key, fullLoom)
+      }
       // Ensure we have a valid key
       const agentKey = lsStory.key || 'default-agent';
       
@@ -142,14 +145,48 @@ class BbAI extends EventEmitter {
       }
 
     } else {
-      console.log('start path-----lifestrap')
-      // memory of life-straps
-      let lifeStrapbe = {}
-      lifeStrapbe.type = 'bentoboxds'
-      lifeStrapbe.action = 'lifestrap-start'
-      this.wiring.library.libManager.bentoPathOperations(lifeStrapbe)
+      // awaken lifestrap gather loom and bring to be resonAgents etc.
+      let lifestrapHistory = await this.wiring.library.libManager.lifeLoom.getLifestrapHistory()
+      if (lifestrapHistory.length > 0) {
+        // 1. We pick the 'Active' story (the Anchor)
+        const activeLifestrap = lifestrapHistory[0]; // need to loop for many lifestraps
+
+        // 2. We use that story's key to get everything else
+        const fullContext = await this.wiring.library.libManager.lifeLoom.getFullContext(activeLifestrap.key);
+
+        // 3. We combine them into one 'Crate' for the Loom
+        const rawDataForLoom = {
+          lifestrap: lifestrapHistory, // The full list, including the active one
+          ...fullContext               // The besearch, cues, chats, etc.
+        };
+
+        // 4. THE STITCH
+        const world = TraceLoom.stitch(rawDataForLoom, this);
+
+        // 5.  pass to beebee BentoBoxDS
+        this.emit('ls-whole', lifestrapHistory, fullContext)  // need to check which data is best to return, but only post birng to be cycle for a lifelstrap story(ies)
+      }
     } 
-    
+  }
+
+  /**
+   * 
+   * @method loomData
+  */
+  loomData = async function (lsKey) {
+
+    // 2. We use that story's key to get everything else
+    const fullContext = await this.wiring.library.libManager.lifeLoom.getFullContext(lsKey);
+
+    // 3. We combine them into one 'Crate' for the Loom
+    /*const rawDataForLoom = {
+      lifestrap: lifestrapHistory, // The full list, including the active one
+      ...fullContext               // The besearch, cues, chats, etc.
+    };*/
+
+    // 4. THE STITCH
+    // const world = TraceLoom.stitch(rawDataForLoom, this);
+    return fullContext
   }
 
   /**
@@ -218,8 +255,6 @@ class BbAI extends EventEmitter {
   beebeeFlow = async function (inFlow) {
     // map life-strap story and further peer conversations and map to lifePatterns
     let lifeSnapPatterns = this.liveLearn.lifeFlow(inFlow, 'life-strap-first')
-    console.log('lifePattern operational')
-    console.log(lifeSnapPatterns)
     // take quick look with beebee own bentoboxDS NLP skills
     let firstReview = await this.contextHelper.inputLanuage(inFlow.data.content, inFlow)
     // beebee has to decide on best info gathering paths.
