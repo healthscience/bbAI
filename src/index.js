@@ -91,6 +91,7 @@ class BbAI extends EventEmitter {
    * 
   */
   bringToBe = async function (bePulse, lsStory) {
+    console.log('bring to be begin-------')
     // beebee  bring to be a lifestrap
     if (bePulse !== 'awake') {
        // what task is ask?
@@ -124,7 +125,10 @@ class BbAI extends EventEmitter {
 
       // from memory saved
       if (bePulse === 'genesis') {
+        console.log('genesis---------btob')
         let patternMatch = this.liveLearn.lifeFlow(rawWords, 'HomeoRange');
+        console.log('paterner from geneisis')
+        console.log(patternMatch)
         await this.prepareLifestrapLens(agentKey, patternMatch)
 
         // 3. Feed the Pattern Structure (Preparation)
@@ -145,6 +149,15 @@ class BbAI extends EventEmitter {
       }
 
     } else {
+      //  awaken beebee to begine again
+      console.log('begin agains')
+      // build seed library to flow to bentoboxds
+      const cuesSeedLibrary = await this.wiring.library.libManager.seedLibrary.getSeedLibrary();
+      console.log('seed library again')
+      if (cuesSeedLibrary.cueContracts.length > 0) {
+        // cue.  pass to beebee BentoBoxDS
+        this.emit('seed-library', cuesSeedLibrary)
+      } 
       // awaken lifestrap gather loom and bring to be resonAgents etc.
       let lifestrapHistory = await this.wiring.library.libManager.lifeLoom.getLifestrapHistory()
       if (lifestrapHistory.length > 0) {
