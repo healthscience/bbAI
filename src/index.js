@@ -153,11 +153,11 @@ class BbAI extends EventEmitter {
       console.log('begin agains')
       // build seed library to flow to bentoboxds
       const cuesSeedLibrary = await this.wiring.library.libManager.seedLibrary.getSeedLibrary();
-      console.log('seed library again')
       if (cuesSeedLibrary.cueContracts.length > 0) {
         // cue.  pass to beebee BentoBoxDS
         this.emit('seed-library', cuesSeedLibrary)
       } 
+
       // awaken lifestrap gather loom and bring to be resonAgents etc.
       let lifestrapHistory = await this.wiring.library.libManager.lifeLoom.getLifestrapHistory()
       if (lifestrapHistory.length > 0) {
@@ -179,6 +179,15 @@ class BbAI extends EventEmitter {
         // 5.  pass to beebee BentoBoxDS
         this.emit('ls-whole', lifestrapHistory, fullContext)  // need to check which data is best to return, but only post birng to be cycle for a lifelstrap story(ies)
       }
+
+      // bring warm peers together
+      const warmHopeers = await this.wiring.library.libManager.warmHopeers.getWarmHopeers();
+      console.log('warm peers')
+      console.log(warmHopeers.length)
+      if (warmHopeers.length > 0) {
+        // peers  pass to beebee BentoBoxDS
+        this.emit('warm-peers-begin', warmHopeers)
+      } 
     } 
   }
 
