@@ -19,6 +19,13 @@ import BeSearch from './besearch/index.js'
 import ContextHelp from './context/contextHelper.js'
 import HopDML from 'hop-dml'
 
+// consilience weave
+import { ConsilienceWeave } from 'consilience-weave'
+import { Orchestrator } from './orchestration/Orchestrator.js';
+
+// Conduction import
+import { BesearchConduction } from './conduction/besearchConduction.js'
+
 // Brain imports
 import { initializeMemory, Memory } from './brain/memory.js'
 import { AltruismHandler } from './brain/altruismHandler.js'
@@ -51,10 +58,19 @@ class BbAI extends EventEmitter {
     this.peerQ = ''
     this.currentTask = null
     this.contextHelper = new ContextHelp()
+    // 2. Instantiate the Weaver cleanly with the universal wiring context
+    this.consilienceWeave = new ConsilienceWeave(this.wiring);
+    // 3. Instantiate the Orchestrator and pass the twins
+    this.orchestrator = new Orchestrator(this.wiring, this.consilienceWeave);
 
     // Pass this.wiringAgent into context.js
     initializeContext(this.wiring.safeflow)
     initializeMemory(this.wiring.network)
+    this.listenConsilienceWeave()
+    this.heliConsilienceWeave()
+
+    // Conduction Instance initialization using the universal wiring
+    this.besearchConduction = new BesearchConduction(this.wiring)
 
     // Expose Brain
     this.brain = {
@@ -91,13 +107,19 @@ class BbAI extends EventEmitter {
    * 
   */
   bringToBe = async function (bePulse, lsStory) {
-    console.log('bring to be begin-------')
     // beebee  bring to be a lifestrap
     if (bePulse !== 'awake') {
        // what task is ask?
       if (bePulse === 'loom') {
-        let keyBuffer = new Uint8Array(Buffer.from(lsStory.contract_key, 'hex'))
+        let keyBuffer = Buffer.from(lsStory.contract_key, 'hex')
+        // let indexKey = keyBuffer.subarray(10);
         let fullLoom = await this.loomData(keyBuffer)
+
+        // V1 Execution: Feed the extracted besearch contracts from the isolated loom load
+        if (fullLoom && fullLoom.besearch && fullLoom.besearch.length > 0) {
+          this.besearchConduction.engage(fullLoom.besearch)
+        }
+
         this.emit('ls-whole-loom', lsStory.contract_key, fullLoom)
       }
       // Ensure we have a valid key
@@ -125,10 +147,7 @@ class BbAI extends EventEmitter {
 
       // from memory saved
       if (bePulse === 'genesis') {
-        console.log('genesis---------btob')
         let patternMatch = this.liveLearn.lifeFlow(rawWords, 'HomeoRange');
-        console.log('paterner from geneisis')
-        console.log(patternMatch)
         await this.prepareLifestrapLens(agentKey, patternMatch)
 
         // 3. Feed the Pattern Structure (Preparation)
@@ -150,22 +169,26 @@ class BbAI extends EventEmitter {
 
     } else {
       //  awaken beebee to begine again
-      console.log('begin agains')
       // build seed library to flow to bentoboxds
-      const cuesSeedLibrary = await this.wiring.library.libManager.seedLibrary.getSeedLibrary();
-      if (cuesSeedLibrary.cueContracts.length > 0) {
+      const seedLibrary = await this.wiring.library.libManager.seedLibrary.getSeedLibrary();
+      if (seedLibrary.cueContracts.length > 0 || seedLibrary.datatypeContracts.length > 0) {
         // cue.  pass to beebee BentoBoxDS
-        this.emit('seed-library', cuesSeedLibrary)
+        this.emit('seed-library', seedLibrary)
       } 
 
       // awaken lifestrap gather loom and bring to be resonAgents etc.
-      let lifestrapHistory = await this.wiring.library.libManager.lifeLoom.getLifestrapHistory()
+      let lifestrapHistory = await this.wiring.library.libManager.lifeLoom.getLifestrapHistory('lifestrap', 'lifestrap')
       if (lifestrapHistory.length > 0) {
         // 1. We pick the 'Active' story (the Anchor)
         const activeLifestrap = lifestrapHistory[0]; // need to loop for many lifestraps
 
         // 2. We use that story's key to get everything else
         const fullContext = await this.wiring.library.libManager.lifeLoom.getFullContext(activeLifestrap.key);
+
+        // V1 Execution: Catch the active besearch contracts inside the full context and cycle them into Conduction
+        if (fullContext && fullContext.besearch && fullContext.besearch.length > 0) {
+          this.besearchConduction.engage(fullContext.besearch)
+        }
 
         // 3. We combine them into one 'Crate' for the Loom
         const rawDataForLoom = {
@@ -182,9 +205,9 @@ class BbAI extends EventEmitter {
 
       // bring warm peers together
       const warmHopeers = await this.wiring.library.libManager.warmHopeers.getWarmHopeers();
-      console.log('warm peers')
-      console.log(warmHopeers.length)
       if (warmHopeers.length > 0) {
+        // bring warm peer connect via topic
+        this.wiring.network.Peers.setupConnectionBegin(warmHopeers)
         // peers  pass to beebee BentoBoxDS
         this.emit('warm-peers-begin', warmHopeers)
       } 
@@ -196,9 +219,9 @@ class BbAI extends EventEmitter {
    * @method loomData
   */
   loomData = async function (lsKey) {
-
+    let fullLoom = {}
     // 2. We use that story's key to get everything else
-    const fullContext = await this.wiring.library.libManager.lifeLoom.getFullContext(lsKey);
+    fullLoom = await this.wiring.library.libManager.lifeLoom.getFullContext(lsKey, 'lensglue');
 
     // 3. We combine them into one 'Crate' for the Loom
     /*const rawDataForLoom = {
@@ -208,7 +231,7 @@ class BbAI extends EventEmitter {
 
     // 4. THE STITCH
     // const world = TraceLoom.stitch(rawDataForLoom, this);
-    return fullContext
+    return fullLoom
   }
 
   /**
@@ -353,6 +376,30 @@ class BbAI extends EventEmitter {
   }
 
 
+  /**
+   * 
+   * @method listenConsilienceWeave
+  */
+  listenConsilienceWeave () {
+    // 3. Listen for module actions that require peer/orchestrator visibility
+    this.consilienceWeave.on('weave-attunement-needed', (driftData) => {
+      this.emit('beebee-response', {
+        type: 'knowledge',
+        action: 'attunement-alert',
+        data: driftData
+      });
+    });
+  }
+
+  /**
+   * 
+   * @method heliConsilienceWeave
+  */
+  heliConsilienceWeave () {
+    // 4. THE DRIVER: Bind the weave to execute automatically on seasonal milestones.
+    this.orchestrator.bindHeliClock();
+
+  }
 
   /**
   *
