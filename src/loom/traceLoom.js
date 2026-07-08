@@ -77,7 +77,7 @@ export const TraceLoom = {
   activatePatterns(strand, beebee) {
     // A. Brain Focus: Feed the dialogue and unmapped cues to the Brain
     if (beebee.brain) {
-      beebee.brain.engageContext(strand.dialogue, strand.residue);
+      // beebee.brain.engageContext(strand.dialogue, strand.residue);
     }
 
     // B. Skill Loading: If it's a 'swim' strand, wake the relevant skill

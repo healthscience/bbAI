@@ -21,9 +21,9 @@ export class BesearchConduction {
     // We do not use old-world polling or timers (setInterval, ms).
     // We bind directly to the Heli engine's native geometric event emitter.
     // As the planet rotates and passes a threshold, Heli emits the new Arc.
-    this.wiring.heli.on('arc_progression', (currentArc, cycleIndex) => {
+    /* this.wiring.heli.on('arc_progression', (currentArc, cycleIndex) => {
       this.evaluateArcMatch(currentArc, cycleIndex);
-    });
+    });*/
   }
 
   /**
