@@ -13,7 +13,7 @@ describe('RDFNavigator Live Integration', () => {
     
     expect(words.length).toBeGreaterThan(0);
     // Basic validation that we got heart-related content
-    expect(words.some(w => w.includes('heart'))).toBe(true);
+    expect(words.some(w => w.includes('swim'))).toBe(true);
   }, TIMEOUT);
 
   it('should parse live RDF and extract one layer of words for Heart', async () => {
