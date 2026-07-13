@@ -169,6 +169,13 @@ class BbAI extends EventEmitter {
 
     } else {
       //  awaken beebee to begine again
+      // bring a pulse to SafeFlow-ECS
+      // FIRST: Kick the Orrery ticker into active motion
+      if (this.wiring.safeflow && typeof this.wiring.safeflow.SafeFlow.startTicker === 'function') {
+        // this.wiring.safeflow.SafeFlow.startTicker();
+      } else {
+        console.log('safeflow not alive yet')
+      }
       // build seed library to flow to bentoboxds
       const seedLibrary = await this.wiring.library.libManager.seedLibrary.getSeedLibrary();
       if (seedLibrary.cueContracts.length > 0 || seedLibrary.datatypeContracts.length > 0) {
