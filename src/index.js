@@ -183,6 +183,12 @@ class BbAI extends EventEmitter {
         this.emit('seed-library', seedLibrary)
       } 
 
+      // emulation graft morphogens
+      const graftLibrary = await this.wiring.library.libManager.seedLibrary.getGraftContracts()
+      if (graftLibrary.orgo.length > 0) {
+        this.emit('graft-library', graftLibrary)
+      }
+
       // awaken lifestrap gather loom and bring to be resonAgents etc.
       let lifestrapHistory = await this.wiring.library.libManager.lifeLoom.getLifestrapHistory('lifestrap', 'lifestrap')
       if (lifestrapHistory.length > 0) {
