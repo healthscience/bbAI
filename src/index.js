@@ -41,6 +41,7 @@ import { RDFNavigator } from './skills/RDFmapper.js'
 import { DataMapper } from './skills/dataMapper.js'
 import { LexiconHarvester } from './skills/lexiconHarvester.js'
 import { Teach } from './skills/teach.js'
+import { setFlagsFromString } from 'v8'
 
 class BbAI extends EventEmitter {
 
@@ -49,6 +50,7 @@ class BbAI extends EventEmitter {
     this.hello = 'beebee-AI--{{hello}}'
     this.publicLibrary = {}
     this.wiring = wiringIn
+    this.SFecsManager = wiringIn.safeflow.SafeFlow.liveEManager
     this.liveLearn = new HopLearn()
     this.queryBuilder = new HopQuerybuider()
     this.beSearch = new BeSearch()
@@ -172,7 +174,7 @@ class BbAI extends EventEmitter {
       // bring a pulse to SafeFlow-ECS
       // FIRST: Kick the Orrery ticker into active motion
       if (this.wiring.safeflow && typeof this.wiring.safeflow.SafeFlow.startTicker === 'function') {
-        // this.wiring.safeflow.SafeFlow.startTicker();
+        this.wiring.safeflow.SafeFlow.startTicker();
       } else {
         console.log('safeflow not alive yet')
       }
@@ -245,6 +247,78 @@ class BbAI extends EventEmitter {
     // 4. THE STITCH
     // const world = TraceLoom.stitch(rawDataForLoom, this);
     return fullLoom
+  }
+
+  /**
+   * beebee ALWAYS routes data queries to the Orrery. No exceptions.
+   * @method processesHOPstory 
+  */
+  async processHOPstory(protoHOP) {
+    console.log('procesHOPstor  BBAI')
+    console.log(protoHOP)
+    if (protoHOP.type !== 'HOPstory') return null
+
+    if (protoHOP.intent === 'review-schema') {
+      let sfData = await this.requestSchemaIntrospection(protoHOP.story.path)
+      console.log('review schama back form SF')
+      console.log(sfData)
+      let bbReply = {}
+      bbReply.type = 'bbai-reply'
+      bbReply.action = 'overlay-data'
+      bbReply.data = sfData
+      this.emit('beebee-safeflow', bbReply)
+    }
+    // get info back to beebee to BentoBoxDS
+   }
+
+ /**
+   * Transient entity probe using strictly the Hyperdrive path
+   */
+  async requestSchemaIntrospection(hyperdrivePath) {
+    console.log(hyperdrivePath)
+    // 1. Spawn clean, transient entity slot
+    const probeId = this.SFecsManager.createEntity()
+
+    // beebee just passes a pure JS object directly. 
+    // SafeFlow-ECS doesn't care where the object came from.
+    this.SFecsManager.addComponent(probeId, 'SchemaProbeRequest', {
+      path: hyperdrivePath,
+      status: 'pending'
+    })
+
+    this.SFecsManager.addComponent(probeId, 'SchemaProbeResult', {
+      columns: [],
+      sampleRows: []
+    })
+
+    // 4. Return a Promise that resolves when the Orrery finishes the Interplay
+    return new Promise((resolve, reject) => {
+      console.log('return promising waiting')
+      const checkInterval = setInterval(() => {
+        const req = this.SFecsManager.getComponent(probeId, 'SchemaProbeRequest')
+        
+        // Safety catch: if the entity vanished prematurely
+        if (!req) {
+          clearInterval(checkInterval)
+          return reject(new Error('Probe vanished from Orrery before completion'))
+        }
+
+        // 5. Read result when status flips
+        if (req.status === 'complete') {
+          const result = this.SFecsManager.getComponent(probeId, 'SchemaProbeResult')
+          
+          // 6. Destroy entity slot for zero-allocation hygiene
+          this.SFecsManager.destroyEntity(probeId)
+          clearInterval(checkInterval)
+          
+          resolve(result)
+        } else if (req.status === 'error') {
+          this.SFecsManager.destroyEntity(probeId)
+          clearInterval(checkInterval)
+          reject(new Error('Introspection failed during Interplay'))
+        }
+      }, 16) // Poll at the same frequency as the SafeFlow pulseInterval
+    })
   }
 
   /**
