@@ -254,14 +254,10 @@ class BbAI extends EventEmitter {
    * @method processesHOPstory 
   */
   async processHOPstory(protoHOP) {
-    console.log('procesHOPstor  BBAI')
-    console.log(protoHOP)
     if (protoHOP.type !== 'HOPstory') return null
 
     if (protoHOP.intent === 'review-schema') {
       let sfData = await this.requestSchemaIntrospection(protoHOP.story.path)
-      console.log('review schama back form SF')
-      console.log(sfData)
       let bbReply = {}
       bbReply.type = 'bbai-reply'
       bbReply.action = 'overlay-data'
