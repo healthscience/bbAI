@@ -50,6 +50,7 @@ class BbAI extends EventEmitter {
     this.hello = 'beebee-AI--{{hello}}'
     this.publicLibrary = {}
     this.wiring = wiringIn
+    this.SafeFlowECS = wiringIn.safeflow.SafeFlow
     this.SFecsManager = wiringIn.safeflow.SafeFlow.liveEManager
     this.liveLearn = new HopLearn()
     this.queryBuilder = new HopQuerybuider()
@@ -248,6 +249,24 @@ class BbAI extends EventEmitter {
     // const world = TraceLoom.stitch(rawDataForLoom, this);
     return fullLoom
   }
+
+  /**
+   * take HOPstory from graft or besearch cycle, network experiment and expand for SafeFlow-ECS
+   * @method expandHOPstory 
+  */
+  async expandHOPstory(storyIn) {
+    console.log('bbai  exp story')
+    console.log(storyIn)
+    if (storyIn.task === 'expand-graft') {
+      console.log('hopStory in')
+      console.log(storyIn)
+      let sfData = await this.SafeFlowECS.ingestStart(storyIn.data)
+
+    } else {
+      // regular HOPstory
+    }
+
+   }
 
   /**
    * beebee ALWAYS routes data queries to the Orrery. No exceptions.
