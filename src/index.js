@@ -219,6 +219,12 @@ class BbAI extends EventEmitter {
         this.emit('ls-whole', lifestrapHistory, fullContext)  // need to check which data is best to return, but only post birng to be cycle for a lifelstrap story(ies)
       }
 
+      // get index of files private and public
+      let driveIndex = await this.wiring.library.libManager.liveHolepunch.DriveFiles.peerDrive.getAllFileMetadata()
+      console.log('private files')
+      console.log(driveIndex)
+      this.emit('drive-index', driveIndex)
+
       // bring warm peers together
       const warmHopeers = await this.wiring.library.libManager.warmHopeers.getWarmHopeers();
       if (warmHopeers.length > 0) {
@@ -255,11 +261,7 @@ class BbAI extends EventEmitter {
    * @method expandHOPstory 
   */
   async expandHOPstory(storyIn) {
-    console.log('bbai  exp story')
-    console.log(storyIn)
     if (storyIn.task === 'expand-graft') {
-      console.log('hopStory in')
-      console.log(storyIn)
       let sfData = await this.SafeFlowECS.ingestStart(storyIn.data)
 
     } else {
