@@ -41,7 +41,6 @@ import { RDFNavigator } from './skills/RDFmapper.js'
 import { DataMapper } from './skills/dataMapper.js'
 import { LexiconHarvester } from './skills/lexiconHarvester.js'
 import { Teach } from './skills/teach.js'
-import { setFlagsFromString } from 'v8'
 
 class BbAI extends EventEmitter {
 
@@ -219,11 +218,10 @@ class BbAI extends EventEmitter {
         this.emit('ls-whole', lifestrapHistory, fullContext)  // need to check which data is best to return, but only post birng to be cycle for a lifelstrap story(ies)
       }
 
-      // get index of files private and public
+      // get index of bento-instrument conduction data 
+      let conductionInstrumentDataGraph = {}
       let driveIndex = await this.wiring.library.libManager.liveHolepunch.DriveFiles.peerDrive.getAllFileMetadata()
-      console.log('private files')
-      console.log(driveIndex)
-      this.emit('drive-index', driveIndex)
+      this.emit('drive-index', { conduction: conductionInstrumentDataGraph, drive: driveIndex })
 
       // bring warm peers together
       const warmHopeers = await this.wiring.library.libManager.warmHopeers.getWarmHopeers();

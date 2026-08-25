@@ -17,6 +17,7 @@
     "axios": "^1.14.0",
     "beebee-agent": "^0.5.2",
     "consilience-weave": "^0.0.2",
+    "hop-osmosis": "^0.0.1",
     "hop-dml": "^0.0.3",
     "hop-learn": "^0.2.1",
     "hop-query-builder": "^0.2.8",
