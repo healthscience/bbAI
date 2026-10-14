@@ -290,7 +290,6 @@ class BbAI extends EventEmitter {
    * Transient entity probe using strictly the Hyperdrive path
    */
   async requestSchemaIntrospection(hyperdrivePath) {
-    console.log(hyperdrivePath)
     // 1. Spawn clean, transient entity slot
     const probeId = this.SFecsManager.createEntity()
 
@@ -308,7 +307,6 @@ class BbAI extends EventEmitter {
 
     // 4. Return a Promise that resolves when the Orrery finishes the Interplay
     return new Promise((resolve, reject) => {
-      console.log('return promising waiting')
       const checkInterval = setInterval(() => {
         const req = this.SFecsManager.getComponent(probeId, 'SchemaProbeRequest')
         
